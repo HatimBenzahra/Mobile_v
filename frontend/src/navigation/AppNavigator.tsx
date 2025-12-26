@@ -1,11 +1,9 @@
-import React from 'react';
-import { NavigationContainer, CommonActions } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BottomNavigation } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { RootStackParamList, TabParamList, User } from '../types';
+import { RootStackParamList, User } from '../types';
 import { colors } from '../constants/theme';
 
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -15,99 +13,37 @@ import HistoriqueScreen from '../screens/history/HistoryScreen';
 import ProfilScreen from '../screens/profile/ProfileScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<TabParamList>();
 
 interface BarreNavigationProps {
   utilisateur: User;
 }
 
 function BarreNavigation({ utilisateur }: BarreNavigationProps) {
+  const [index, setIndex] = useState(0);
+
+  const routes = [
+    { key: 'accueil', title: 'Accueil', focusedIcon: 'view-dashboard', unfocusedIcon: 'view-dashboard-outline' },
+    { key: 'immeubles', title: 'Immeubles', focusedIcon: 'office-building', unfocusedIcon: 'office-building-outline' },
+    { key: 'historique', title: 'Historique', focusedIcon: 'history' },
+    { key: 'profil', title: 'Profil', focusedIcon: 'account-circle', unfocusedIcon: 'account-circle-outline' },
+  ];
+
+  const renderScene = BottomNavigation.SceneMap({
+    accueil: () => <DashboardScreen user={utilisateur} />,
+    immeubles: ImmeublesScreen,
+    historique: HistoriqueScreen,
+    profil: () => <ProfilScreen utilisateur={utilisateur} />,
+  });
+
   return (
-    <Tab.Navigator
-      screenOptions={{ headerShown: false }}
-      tabBar={({ navigation, state, descriptors, insets }) => (
-        <BottomNavigation.Bar
-          navigationState={state}
-          safeAreaInsets={insets}
-          activeColor={colors.brand}
-          inactiveColor={colors.textSecondary}
-          style={{ backgroundColor: colors.bgPrimary }}
-          onTabPress={({ route, preventDefault }) => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!event.defaultPrevented) {
-              navigation.dispatch({
-                ...CommonActions.navigate(route.name, route.params),
-                target: state.key,
-              });
-            }
-          }}
-          renderIcon={({ route, focused, color }) => {
-            const { options } = descriptors[route.key];
-            if (options.tabBarIcon) {
-              return options.tabBarIcon({ focused, color, size: 24 });
-            }
-            return null;
-          }}
-          getLabelText={({ route }) => {
-            const { options } = descriptors[route.key];
-            return typeof options.tabBarLabel === 'string'
-              ? options.tabBarLabel
-              : options.title ?? route.name;
-          }}
-        />
-      )}
-    >
-      <Tab.Screen
-        name="TableauDeBord"
-        options={{
-          tabBarLabel: 'Tableau de bord',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />
-          ),
-        }}
-      >
-        {() => <DashboardScreen user={utilisateur} />}
-      </Tab.Screen>
-
-      <Tab.Screen
-        name="Immeubles"
-        component={ImmeublesScreen}
-        options={{
-          tabBarLabel: 'Immeubles',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="office-building" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="Historique"
-        component={HistoriqueScreen}
-        options={{
-          tabBarLabel: 'Historique',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="history" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="Profil"
-        options={{
-          tabBarLabel: 'Profil',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="account-circle" size={size} color={color} />
-          ),
-        }}
-      >
-        {() => <ProfilScreen utilisateur={utilisateur} />}
-      </Tab.Screen>
-    </Tab.Navigator>
+    <BottomNavigation
+      navigationState={{ index, routes }}
+      onIndexChange={setIndex}
+      renderScene={renderScene}
+      activeColor={colors.brand}
+      inactiveColor={colors.textSecondary}
+      barStyle={{ backgroundColor: colors.bgPrimary }}
+    />
   );
 }
 

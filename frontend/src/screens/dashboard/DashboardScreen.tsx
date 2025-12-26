@@ -3,36 +3,16 @@ import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Text, Card } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-
+import { CarteStat } from './Carte_stats';
 import { User, ROLE_LABELS } from '../../types';
 import { colors, spacing } from '../../constants/theme';
 import { statisticsService, UserStats } from '../../services/statistics';
-
-interface CarteStatProps {
-  titre: string;
-  valeur: number;
-  couleur: string;
-}
-
-function CarteStat({ titre, valeur, couleur }: CarteStatProps) {
-  return (
-    <Card style={styles.carteStat}>
-      <Card.Content style={styles.carteStatContenu}>
-        <Text variant="headlineMedium" style={[styles.statValeur, { color: couleur }]}>
-          {valeur}
-        </Text>
-        <Text variant="bodySmall" style={styles.statLabel}>
-          {titre}
-        </Text>
-      </Card.Content>
-    </Card>
-  );
-}
+import { styles } from './style';
 
 interface TableauDeBordProps {
   user: User;
 }
-
+//le Dashboard prends en paramètre un utilisateur ==> Commercial/Manager
 export default function DashboardScreen({ user }: TableauDeBordProps) {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [chargement, setChargement] = useState(true);
@@ -103,65 +83,3 @@ export default function DashboardScreen({ user }: TableauDeBordProps) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  conteneur: {
-    flex: 1,
-    backgroundColor: colors.bgSecondary,
-  },
-  entete: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.bgPrimary,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  enteteTitre: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  enteteSousTitre: {
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContenu: {
-    padding: spacing.lg,
-  },
-  titreSectionTitle: {
-    color: colors.textPrimary,
-    fontWeight: '600',
-    marginBottom: spacing.md,
-  },
-  loader: {
-    marginTop: spacing.xl,
-  },
-  grilleStats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  carteStat: {
-    width: '47%',
-    backgroundColor: colors.bgPrimary,
-    marginBottom: spacing.sm,
-  },
-  carteStatContenu: {
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-  },
-  statValeur: {
-    fontWeight: '700',
-  },
-  statLabel: {
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-    textAlign: 'center',
-  },
-});
