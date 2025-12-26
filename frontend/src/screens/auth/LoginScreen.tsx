@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { RootStackParamList } from '../../types';
 import { colors, spacing, radius, shadows } from '../../constants/theme';
+import { ErrorMessages } from '../../constants/errors';
 import { authService } from '../../services/auth';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -21,24 +22,20 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Champs requis', 'Veuillez remplir tous les champs');
+      Alert.alert('Erreur', ErrorMessages.FORM.REQUIRED_FIELDS);
       return;
     }
 
     setIsLoading(true);
-    console.log('🔐 Tentative de login avec:', email.trim());
 
     const result = await authService.login(email.trim(), password);
-    console.log('📦 Résultat login:', JSON.stringify(result, null, 2));
 
     setIsLoading(false);
 
     if (result.success && result.user) {
-      console.log('✅ Login réussi, navigation vers Dashboard');
       navigation.replace('Dashboard', { user: result.user });
     } else {
-      console.log('❌ Login échoué:', result.error);
-      Alert.alert('Erreur', result.error || 'Une erreur est survenue');
+      Alert.alert('Erreur', result.error || ErrorMessages.GENERIC.UNKNOWN);
     }
   };
 

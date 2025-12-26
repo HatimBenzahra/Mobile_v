@@ -9,6 +9,9 @@ export const colors = {
   mediumGray: '#9CA3AF',
 
   success: '#10B981',
+  error: '#EF4444',
+  warning: '#F59E0B',
+  info: '#3B82F6',
 
   textPrimary: '#111827',
   textSecondary: '#4B5563',

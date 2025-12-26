@@ -2,6 +2,7 @@ import { gql } from '@apollo/client';
 import { apolloClient } from './apollo';
 import { storage } from './storage';
 import { UserRole } from '../types';
+import { ErrorMessages, parseGraphQLError } from '../constants/errors';
 
 interface AuthResponse {
   access_token: string;
@@ -89,24 +90,24 @@ export const authService = {
       await storage.setUser(user);
 
       return { success: true, user };
-    } catch (error: any) {
-      const message = error?.message || 'Erreur de connexion';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : '';
 
       if (message.includes('UNAUTHORIZED_GROUP')) {
         return {
           success: false,
-          error: "Vous n'êtes pas autorisé à accéder à cette application",
+          error: ErrorMessages.AUTH.UNAUTHORIZED,
         };
       }
 
       if (message.includes('Unauthorized') || message.includes('Invalid')) {
         return {
           success: false,
-          error: 'Email ou mot de passe incorrect',
+          error: ErrorMessages.AUTH.INVALID_CREDENTIALS,
         };
       }
 
-      return { success: false, error: message };
+      return { success: false, error: parseGraphQLError(error) };
     }
   },
 

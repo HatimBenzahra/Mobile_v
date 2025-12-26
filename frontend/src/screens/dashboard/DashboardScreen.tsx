@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Text, Button, Card } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -9,14 +9,50 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackParamList, ROLE_LABELS } from '../../types';
 import { colors, spacing, radius } from '../../constants/theme';
 import { authService } from '../../services/auth';
+import { statisticsService, UserStats } from '../../services/statistics';
 
 type DashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 type DashboardScreenRouteProp = RouteProp<RootStackParamList, 'Dashboard'>;
+
+interface StatCardProps {
+  title: string;
+  value: number;
+  color: string;
+}
+
+function StatCard({ title, value, color }: StatCardProps) {
+  return (
+    <Card style={styles.statCard}>
+      <Card.Content style={styles.statCardContent}>
+        <Text variant="headlineMedium" style={[styles.statValue, { color }]}>
+          {value}
+        </Text>
+        <Text variant="bodySmall" style={styles.statLabel}>
+          {title}
+        </Text>
+      </Card.Content>
+    </Card>
+  );
+}
 
 export default function DashboardScreen() {
   const navigation = useNavigation<DashboardScreenNavigationProp>();
   const route = useRoute<DashboardScreenRouteProp>();
   const { user } = route.params;
+
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    setLoading(true);
+    const userStats = await statisticsService.getMyStats(user.id);
+    setStats(userStats);
+    setLoading(false);
+  };
 
   const handleLogout = async () => {
     await authService.logout();
@@ -46,20 +82,43 @@ export default function DashboardScreen() {
         </Button>
       </View>
 
-      <View style={styles.content}>
-        <Card style={styles.card}>
-          <Card.Content style={styles.cardContent}>
-            <View style={styles.iconContainer}>
-              <Text style={styles.icon}>✓</Text>
-            </View>
-            <Text variant="titleMedium" style={styles.cardTitle}>Connexion réussie</Text>
-            <Text variant="bodySmall" style={styles.cardDescription}>
-              Bienvenue dans votre {ROLE_LABELS[user.role].toLowerCase()}.
-              Les fonctionnalités seront bientôt disponibles.
-            </Text>
-          </Card.Content>
-        </Card>
-      </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <Text variant="titleMedium" style={styles.sectionTitle}>
+          Mes Statistiques
+        </Text>
+
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.brand} style={styles.loader} />
+        ) : stats ? (
+          <View style={styles.statsGrid}>
+            <StatCard
+              title="Contrats Signés"
+              value={stats.contratsSignes}
+              color={colors.success}
+            />
+            <StatCard
+              title="Refus"
+              value={stats.refus}
+              color={colors.error}
+            />
+            <StatCard
+              title="Portes Toquées"
+              value={stats.portesToquees}
+              color={colors.brand}
+            />
+            <StatCard
+              title="Immeubles Prospectés"
+              value={stats.immeublesProspectes}
+              color={colors.info}
+            />
+            <StatCard
+              title="RDV Pris"
+              value={stats.rendezVousPris}
+              color={colors.warning}
+            />
+          </View>
+        ) : null}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -90,41 +149,41 @@ const styles = StyleSheet.create({
   logoutButton: {
     borderColor: colors.border,
   },
-  content: {
+  scrollView: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
   },
-  card: {
-    width: '100%',
-    backgroundColor: colors.bgPrimary,
+  scrollContent: {
+    padding: spacing.lg,
   },
-  cardContent: {
-    alignItems: 'center',
-    paddingVertical: spacing.lg,
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.full,
-    backgroundColor: colors.success,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  icon: {
-    fontSize: 24,
-    color: colors.white,
-    fontWeight: '700',
-  },
-  cardTitle: {
+  sectionTitle: {
     color: colors.textPrimary,
     fontWeight: '600',
+    marginBottom: spacing.md,
+  },
+  loader: {
+    marginTop: spacing.xl,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  statCard: {
+    width: '47%',
+    backgroundColor: colors.bgPrimary,
     marginBottom: spacing.sm,
   },
-  cardDescription: {
+  statCardContent: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  statValue: {
+    fontWeight: '700',
+  },
+  statLabel: {
     color: colors.textSecondary,
+    marginTop: spacing.xs,
     textAlign: 'center',
   },
 });
