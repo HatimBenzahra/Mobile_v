@@ -6,24 +6,11 @@ import { StatusBar } from 'expo-status-bar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { RootStackParamList, LoginCredentials, AuthResult, User } from '../../types';
+import { RootStackParamList } from '../../types';
 import { colors, spacing, radius, shadows } from '../../constants/theme';
+import { authService } from '../../services/auth';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
-
-const MOCK_USERS: User[] = [
-  { id: '1', email: 'commercial@test.com', nom: 'Dupont', prenom: 'Jean', role: 'commercial' },
-  { id: '2', email: 'manager@test.com', nom: 'Martin', prenom: 'Sophie', role: 'manager' },
-];
-
-const VALID_PASSWORD = '123456';
-
-function mockLogin(credentials: LoginCredentials): AuthResult {
-  const user = MOCK_USERS.find((u) => u.email === credentials.email);
-  if (!user) return { success: false, error: 'Utilisateur non trouvé' };
-  if (credentials.password !== VALID_PASSWORD) return { success: false, error: 'Mot de passe incorrect' };
-  return { success: true, user };
-}
 
 export default function LoginScreen() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -39,13 +26,18 @@ export default function LoginScreen() {
     }
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    const result = mockLogin({ email: email.trim(), password });
+    console.log('🔐 Tentative de login avec:', email.trim());
+
+    const result = await authService.login(email.trim(), password);
+    console.log('📦 Résultat login:', JSON.stringify(result, null, 2));
+
     setIsLoading(false);
 
-    if (result.success) {
-      navigation.replace('Dashboard');
+    if (result.success && result.user) {
+      console.log('✅ Login réussi, navigation vers Dashboard');
+      navigation.replace('Dashboard', { user: result.user });
     } else {
+      console.log('❌ Login échoué:', result.error);
       Alert.alert('Erreur', result.error || 'Une erreur est survenue');
     }
   };
@@ -58,7 +50,6 @@ export default function LoginScreen() {
         style={styles.keyboardView}
       >
         <View style={styles.content}>
-          {/* Header */}
           <View style={styles.header}>
             <View style={styles.logoContainer}>
               <Text style={styles.logoText}>P</Text>
@@ -67,7 +58,6 @@ export default function LoginScreen() {
             <Text variant="bodyMedium" style={styles.subtitle}>Connectez-vous pour continuer</Text>
           </View>
 
-          {/* Form */}
           <View style={styles.form}>
             <TextInput
               label="Email"

@@ -1,10 +1,14 @@
+import { ApolloProvider } from '@apollo/client/react';
 import { PaperProvider } from 'react-native-paper';
+import { apolloClient } from './src/services/apollo';
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
   return (
-    <PaperProvider>
-      <AppNavigator />
-    </PaperProvider>
+    <ApolloProvider client={apolloClient}>
+      <PaperProvider>
+        <AppNavigator />
+      </PaperProvider>
+    </ApolloProvider>
   );
 }

@@ -4,17 +4,22 @@ import { Text, Button, Card } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 
-import { RootStackParamList } from '../../types';
+import { RootStackParamList, ROLE_LABELS } from '../../types';
 import { colors, spacing, radius } from '../../constants/theme';
+import { authService } from '../../services/auth';
 
 type DashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
+type DashboardScreenRouteProp = RouteProp<RootStackParamList, 'Dashboard'>;
 
 export default function DashboardScreen() {
   const navigation = useNavigation<DashboardScreenNavigationProp>();
+  const route = useRoute<DashboardScreenRouteProp>();
+  const { user } = route.params;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authService.logout();
     navigation.replace('Login');
   };
 
@@ -22,11 +27,14 @@ export default function DashboardScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text variant="titleLarge" style={styles.headerTitle}>Dashboard</Text>
-          <Text variant="bodySmall" style={styles.headerSubtitle}>Bienvenue sur ProspectApp</Text>
+          <Text variant="titleLarge" style={styles.headerTitle}>
+            {ROLE_LABELS[user.role]}
+          </Text>
+          <Text variant="bodySmall" style={styles.headerSubtitle}>
+            {user.email}
+          </Text>
         </View>
         <Button
           mode="outlined"
@@ -38,7 +46,6 @@ export default function DashboardScreen() {
         </Button>
       </View>
 
-      {/* Content */}
       <View style={styles.content}>
         <Card style={styles.card}>
           <Card.Content style={styles.cardContent}>
@@ -47,7 +54,7 @@ export default function DashboardScreen() {
             </View>
             <Text variant="titleMedium" style={styles.cardTitle}>Connexion réussie</Text>
             <Text variant="bodySmall" style={styles.cardDescription}>
-              Vous êtes connecté à votre espace de prospection.
+              Bienvenue dans votre {ROLE_LABELS[user.role].toLowerCase()}.
               Les fonctionnalités seront bientôt disponibles.
             </Text>
           </Card.Content>
