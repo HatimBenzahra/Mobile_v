@@ -2,7 +2,7 @@ import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { storage } from './storage';
 
-const API_URL = 'https://pro-win.app/graphql';
+const API_URL = 'http://localhost:3000/graphql';
 
 const httpLink = createHttpLink({
   uri: API_URL,
