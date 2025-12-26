@@ -1,5 +1,3 @@
-import { TextStyle } from 'react-native';
-
 // ========== COLORS ==========
 
 export const colors = {
@@ -18,7 +16,6 @@ export const colors = {
 
   bgPrimary: '#FFFFFF',
   bgSecondary: '#F9FAFB',
-  bgInput: '#F3F4F6',
 
   border: '#E5E7EB',
 } as const;
@@ -44,54 +41,9 @@ export const radius = {
   full: 9999,
 } as const;
 
-// ========== TYPOGRAPHY ==========
-
-export const typography = {
-  h1: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  } as TextStyle,
-
-  h2: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  } as TextStyle,
-
-  h3: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  } as TextStyle,
-
-  bodySmall: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: colors.textSecondary,
-  } as TextStyle,
-
-  button: {
-    fontSize: 15,
-    fontWeight: '600',
-  } as TextStyle,
-
-  buttonSmall: {
-    fontSize: 13,
-    fontWeight: '500',
-  } as TextStyle,
-} as const;
-
 // ========== SHADOWS ==========
 
 export const shadows = {
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
   md: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

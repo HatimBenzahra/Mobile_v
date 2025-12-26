@@ -1,21 +1,13 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Text, TextInput, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { RootStackParamList, LoginCredentials, AuthResult, User } from '../../types';
-import { colors, spacing, radius, shadows, typography } from '../../constants/theme';
+import { colors, spacing, radius, shadows } from '../../constants/theme';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -71,63 +63,55 @@ export default function LoginScreen() {
             <View style={styles.logoContainer}>
               <Text style={styles.logoText}>P</Text>
             </View>
-            <Text style={styles.title}>Propection Terrain</Text>
-            <Text style={styles.subtitle}>Connectez-vous pour continuer</Text>
+            <Text variant="headlineMedium" style={styles.title}>Prospection Terrain</Text>
+            <Text variant="bodyMedium" style={styles.subtitle}>Connectez-vous pour continuer</Text>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
-            {/* Email */}
-            <View style={styles.fieldGroup}>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                value={email}
-                onChangeText={setEmail}
-                editable={!isLoading}
-              />
-            </View>
-
-            {/* Password */}
-            <View style={styles.fieldGroup}>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.inputPassword}
-                  placeholder="Mot de passe"
-                  placeholderTextColor={colors.textMuted}
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                  editable={!isLoading}
-                />
-                <Pressable
-                  style={styles.toggleButton}
-                  onPress={() => setShowPassword(!showPassword)}
-                  hitSlop={8}
-                >
-                  <Text style={styles.toggleText}>{showPassword ? 'Masquer' : 'Afficher'}</Text>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Submit */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.submitButton,
-                pressed && styles.submitButtonPressed,
-                isLoading && styles.submitButtonDisabled,
-              ]}
-              onPress={handleLogin}
+            <TextInput
+              label="Email"
+              mode="outlined"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
               disabled={isLoading}
+              style={styles.input}
+              outlineColor={colors.border}
+              activeOutlineColor={colors.brand}
+            />
+
+            <TextInput
+              label="Mot de passe"
+              mode="outlined"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              disabled={isLoading}
+              style={styles.input}
+              outlineColor={colors.border}
+              activeOutlineColor={colors.brand}
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? 'eye-off' : 'eye'}
+                  onPress={() => setShowPassword(!showPassword)}
+                />
+              }
+            />
+
+            <Button
+              mode="contained"
+              onPress={handleLogin}
+              loading={isLoading}
+              disabled={isLoading}
+              style={styles.button}
+              contentStyle={styles.buttonContent}
+              buttonColor={colors.brand}
             >
-              <Text style={styles.submitButtonText}>
-                {isLoading ? 'Connexion...' : 'Se connecter'}
-              </Text>
-            </Pressable>
+              Se connecter
+            </Button>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -148,8 +132,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     justifyContent: 'center',
   },
-
-  // Header
   header: {
     alignItems: 'center',
     marginBottom: spacing.xxl,
@@ -168,72 +150,25 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '700',
     color: colors.white,
-    letterSpacing: -1,
   },
   title: {
-    ...typography.h1,
+    color: colors.textPrimary,
+    fontWeight: '700',
     marginBottom: spacing.xs,
   },
   subtitle: {
-    ...typography.bodySmall,
+    color: colors.textSecondary,
   },
-
-  // Form
   form: {},
-  fieldGroup: {
-    marginBottom: spacing.md,
-  },
   input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: colors.textPrimary,
+    marginBottom: spacing.md,
     backgroundColor: colors.white,
   },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.white,
-  },
-  inputPassword: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
-  toggleButton: {
-    paddingHorizontal: spacing.md,
-  },
-  toggleText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors.brand,
-  },
-
-  // Submit
-  submitButton: {
-    backgroundColor: colors.brand,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
+  button: {
     marginTop: spacing.sm,
-    ...shadows.sm,
+    borderRadius: radius.md,
   },
-  submitButtonPressed: {
-    backgroundColor: colors.brandDark,
-  },
-  submitButtonDisabled: {
-    backgroundColor: colors.mediumGray,
-  },
-  submitButtonText: {
-    ...typography.button,
-    color: colors.white,
+  buttonContent: {
+    paddingVertical: spacing.xs,
   },
 });

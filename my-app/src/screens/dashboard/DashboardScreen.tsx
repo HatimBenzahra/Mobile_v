@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Text, Button, Card } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { RootStackParamList } from '../../types';
-import { colors, spacing, radius, shadows, typography } from '../../constants/theme';
+import { colors, spacing, radius } from '../../constants/theme';
 
 type DashboardScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
@@ -24,32 +25,33 @@ export default function DashboardScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Dashboard</Text>
-          <Text style={styles.headerSubtitle}>Bienvenue sur ProspectApp</Text>
+          <Text variant="titleLarge" style={styles.headerTitle}>Dashboard</Text>
+          <Text variant="bodySmall" style={styles.headerSubtitle}>Bienvenue sur ProspectApp</Text>
         </View>
-        <Pressable
-          style={({ pressed }) => [
-            styles.logoutButton,
-            pressed && styles.logoutButtonPressed,
-          ]}
+        <Button
+          mode="outlined"
           onPress={handleLogout}
+          textColor={colors.textSecondary}
+          style={styles.logoutButton}
         >
-          <Text style={styles.logoutText}>Déconnexion</Text>
-        </Pressable>
+          Déconnexion
+        </Button>
       </View>
 
       {/* Content */}
       <View style={styles.content}>
-        <View style={styles.card}>
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>✓</Text>
-          </View>
-          <Text style={styles.cardTitle}>Connexion réussie</Text>
-          <Text style={styles.cardDescription}>
-            Vous êtes connecté à votre espace de prospection.
-            Les fonctionnalités seront bientôt disponibles.
-          </Text>
-        </View>
+        <Card style={styles.card}>
+          <Card.Content style={styles.cardContent}>
+            <View style={styles.iconContainer}>
+              <Text style={styles.icon}>✓</Text>
+            </View>
+            <Text variant="titleMedium" style={styles.cardTitle}>Connexion réussie</Text>
+            <Text variant="bodySmall" style={styles.cardDescription}>
+              Vous êtes connecté à votre espace de prospection.
+              Les fonctionnalités seront bientôt disponibles.
+            </Text>
+          </Card.Content>
+        </Card>
       </View>
     </SafeAreaView>
   );
@@ -60,55 +62,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bgSecondary,
   },
-
-  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     backgroundColor: colors.bgPrimary,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   headerTitle: {
-    ...typography.h2,
+    color: colors.textPrimary,
+    fontWeight: '700',
   },
   headerSubtitle: {
-    ...typography.bodySmall,
+    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   logoutButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.bgInput,
-    borderRadius: radius.md,
-    borderWidth: 1,
     borderColor: colors.border,
   },
-  logoutButtonPressed: {
-    backgroundColor: colors.lightGray,
-  },
-  logoutText: {
-    ...typography.buttonSmall,
-    color: colors.textSecondary,
-  },
-
-  // Content
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
   card: {
-    backgroundColor: colors.bgPrimary,
-    borderRadius: radius.xl,
-    padding: spacing.xxl,
-    alignItems: 'center',
     width: '100%',
-    ...shadows.md,
+    backgroundColor: colors.bgPrimary,
+  },
+  cardContent: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
   },
   iconContainer: {
     width: 56,
@@ -117,18 +104,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   icon: {
-    ...typography.h1,
+    fontSize: 24,
     color: colors.white,
+    fontWeight: '700',
   },
   cardTitle: {
-    ...typography.h3,
+    color: colors.textPrimary,
+    fontWeight: '600',
     marginBottom: spacing.sm,
   },
   cardDescription: {
-    ...typography.bodySmall,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 });
