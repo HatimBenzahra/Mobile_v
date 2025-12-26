@@ -1,6 +1,6 @@
 import { ApolloProvider } from '@apollo/client/react';
 import { PaperProvider } from 'react-native-paper';
-import { apolloClient } from './src/services/apollo';
+import { apolloClient } from './src/services/api';
 import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {

@@ -1,8 +1,8 @@
 import { gql } from '@apollo/client';
-import { apolloClient } from './apollo';
-import { storage } from './storage';
-import { UserRole } from '../types';
-import { ErrorMessages, parseGraphQLError } from '../constants/errors';
+import { apolloClient } from '../api';
+import { storage } from './auth.storage';
+import { UserRole } from '../../types';
+import { ErrorMessages, parseGraphQLError } from '../../constants/errors';
 
 interface AuthResponse {
   access_token: string;

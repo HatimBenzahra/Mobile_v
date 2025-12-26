@@ -1,6 +1,6 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { storage } from './storage';
+import { storage } from '../auth/auth.storage';
 
 const API_URL = 'http://localhost:3000/graphql';
 

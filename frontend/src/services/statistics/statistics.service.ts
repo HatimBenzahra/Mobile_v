@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client';
-import { apolloClient } from './apollo';
+import { apolloClient } from '../api';
 
 const GET_MY_STATISTICS = gql`
   query GetStatistics($commercialId: Int) {
