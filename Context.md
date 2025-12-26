@@ -336,6 +336,88 @@ Pour plus de détails sur :
 
 ---
 
-**Dernière mise à jour :** 25 Décembre 2025
-**Version :** 1.0
+## 📁 Structure du Projet Mobile (React Native / Expo)
+
+```
+my-app/
+├── App.tsx                      # Point d'entrée
+├── src/
+│   ├── constants/
+│   │   └── theme.ts             # Design system (couleurs, spacing, radius, shadows)
+│   ├── styles/
+│   │   └── common.ts            # Styles réutilisables (containers, inputs, buttons, etc.)
+│   ├── types/
+│   │   └── index.ts             # Types TypeScript (User, Auth, Navigation)
+│   ├── navigation/
+│   │   └── AppNavigator.tsx     # Configuration des routes
+│   └── screens/
+│       ├── auth/
+│       │   └── LoginScreen.tsx
+│       └── dashboard/
+│           └── DashboardScreen.tsx
+```
+
+### Design System
+
+#### Palette de Couleurs
+
+| Variable | Hex | Usage |
+|----------|-----|-------|
+| `primary` | `#27ae60` | Actions principales, succès |
+| `primaryDark` | `#1e8449` | Hover/pressed states |
+| `secondary` | `#3498db` | Actions secondaires, liens |
+| `dark` | `#2c3e50` | Backgrounds sombres, texte principal |
+| `error` | `#e74c3c` | Erreurs, déconnexion |
+| `warning` | `#f39c12` | Alertes |
+| `gray` | `#7f8c8d` | Texte secondaire |
+| `grayLight` | `#95a5a6` | Placeholders |
+| `light` | `#ecf0f1` | Bordures |
+| `background` | `#f5f6fa` | Background clair |
+| `card` | `#ffffff` | Cards, inputs |
+
+#### Spacing
+
+| Variable | Valeur |
+|----------|--------|
+| `xs` | 4px |
+| `sm` | 8px |
+| `md` | 16px |
+| `lg` | 24px |
+| `xl` | 32px |
+| `xxl` | 48px |
+
+#### Border Radius
+
+| Variable | Valeur |
+|----------|--------|
+| `sm` | 6px |
+| `md` | 10px |
+| `lg` | 16px |
+| `xl` | 24px |
+
+#### Font Sizes
+
+| Variable | Valeur |
+|----------|--------|
+| `xs` | 11px |
+| `sm` | 13px |
+| `md` | 14px |
+| `lg` | 16px |
+| `xl` | 18px |
+| `xxl` | 22px |
+| `title` | 28px |
+
+### Styles Communs Disponibles
+
+- `containers`: screen, screenDark, card, section
+- `inputs`: container, label, input, inputWithIcon
+- `buttons`: primary, secondary, danger, ghost
+- `typography`: title, heading, subtitle, body, caption
+- `header`: container, title
+- `layout`: flex, center, row, spaceBetween
+
+---
+
+**Dernière mise à jour :** 26 Décembre 2025
+**Version :** 1.1
 **Statut :** Documentation complète

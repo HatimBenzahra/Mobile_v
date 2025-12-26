@@ -5,118 +5,132 @@ import {
   TextInput,
   Pressable,
   StyleSheet,
-  SafeAreaView,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+
+import { RootStackParamList, LoginCredentials, AuthResult, User } from '../../types';
+import { colors, spacing, radius, shadows, typography } from '../../constants/theme';
+
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+
+const MOCK_USERS: User[] = [
+  { id: '1', email: 'commercial@test.com', nom: 'Dupont', prenom: 'Jean', role: 'commercial' },
+  { id: '2', email: 'manager@test.com', nom: 'Martin', prenom: 'Sophie', role: 'manager' },
+];
+
+const VALID_PASSWORD = '123456';
+
+function mockLogin(credentials: LoginCredentials): AuthResult {
+  const user = MOCK_USERS.find((u) => u.email === credentials.email);
+  if (!user) return { success: false, error: 'Utilisateur non trouvé' };
+  if (credentials.password !== VALID_PASSWORD) return { success: false, error: 'Mot de passe incorrect' };
+  return { success: true, user };
+}
 
 export default function LoginScreen() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const validateEmail = (text: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(text);
-  };
-
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Erreur', 'Remplis tous les champs !');
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      Alert.alert('Erreur', 'Email invalide !');
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert('Erreur', 'Le mot de passe doit faire au moins 6 caractères !');
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Champs requis', 'Veuillez remplir tous les champs');
       return;
     }
 
     setIsLoading(true);
-    try {
-      // TODO: Appel API réel
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      Alert.alert('Succès', `Bienvenue ${email} !`);
-      setEmail('');
-      setPassword('');
-    } catch (error) {
-      Alert.alert('Erreur', 'Quelque chose a mal tourné');
-    } finally {
-      setIsLoading(false);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    const result = mockLogin({ email: email.trim(), password });
+    setIsLoading(false);
+
+    if (result.success) {
+      navigation.replace('Dashboard');
+    } else {
+      Alert.alert('Erreur', result.error || 'Une erreur est survenue');
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <View style={styles.content}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logoText}>P</Text>
+            </View>
+            <Text style={styles.title}>Propection Terrain</Text>
+            <Text style={styles.subtitle}>Connectez-vous pour continuer</Text>
+          </View>
 
-      {/* LOGO */}
-      <View style={styles.logoSection}>
-        <Text style={styles.logo}>🏢</Text>
-        <Text style={styles.appName}>ProspectApp</Text>
-        <Text style={styles.subtitle}>Gérez vos prospections</Text>
-      </View>
+          {/* Form */}
+          <View style={styles.form}>
+            {/* Email */}
+            <View style={styles.fieldGroup}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={email}
+                onChangeText={setEmail}
+                editable={!isLoading}
+              />
+            </View>
 
-      {/* FORMULAIRE */}
-      <View style={styles.formSection}>
-        {/* EMAIL */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="commercial@exemple.com"
-            placeholderTextColor="#999"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-            editable={!isLoading}
-          />
-        </View>
+            {/* Password */}
+            <View style={styles.fieldGroup}>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.inputPassword}
+                  placeholder="Mot de passe"
+                  placeholderTextColor={colors.textMuted}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  editable={!isLoading}
+                />
+                <Pressable
+                  style={styles.toggleButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                  hitSlop={8}
+                >
+                  <Text style={styles.toggleText}>{showPassword ? 'Masquer' : 'Afficher'}</Text>
+                </Pressable>
+              </View>
+            </View>
 
-        {/* PASSWORD */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Mot de passe</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.inputPassword}
-              placeholder="••••••••"
-              placeholderTextColor="#999"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-              editable={!isLoading}
-            />
+            {/* Submit */}
             <Pressable
-              style={styles.eyeButton}
-              onPress={() => setShowPassword(!showPassword)}
+              style={({ pressed }) => [
+                styles.submitButton,
+                pressed && styles.submitButtonPressed,
+                isLoading && styles.submitButtonDisabled,
+              ]}
+              onPress={handleLogin}
+              disabled={isLoading}
             >
-              <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '🙈'}</Text>
+              <Text style={styles.submitButtonText}>
+                {isLoading ? 'Connexion...' : 'Se connecter'}
+              </Text>
             </Pressable>
           </View>
         </View>
-
-        {/* FORGOT PASSWORD */}
-        <Pressable>
-          <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
-        </Pressable>
-
-        {/* LOGIN BUTTON */}
-        <Pressable
-          style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-          onPress={handleLogin}
-          disabled={isLoading}
-        >
-          <Text style={styles.loginButtonText}>
-            {isLoading ? 'Connexion...' : 'Se connecter'}
-          </Text>
-        </Pressable>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -124,92 +138,102 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2c3e50',
+    backgroundColor: colors.bgPrimary,
   },
-  logoSection: {
-    flex: 0.4,
+  keyboardView: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: spacing.xl,
+    justifyContent: 'center',
+  },
+
+  // Header
+  header: {
+    alignItems: 'center',
+    marginBottom: spacing.xxl,
+  },
+  logoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.xl,
+    backgroundColor: colors.brand,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: spacing.lg,
+    ...shadows.md,
   },
-  logo: {
-    fontSize: 60,
-    marginBottom: 10,
+  logoText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.white,
+    letterSpacing: -1,
   },
-  appName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
+  title: {
+    ...typography.h1,
+    marginBottom: spacing.xs,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#bdc3c7',
+    ...typography.bodySmall,
   },
-  formSection: {
-    flex: 0.6,
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ecf0f1',
-    marginBottom: 8,
+
+  // Form
+  form: {},
+  fieldGroup: {
+    marginBottom: spacing.md,
   },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: '#333',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: colors.textPrimary,
+    backgroundColor: colors.white,
   },
-  passwordContainer: {
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.white,
   },
   inputPassword: {
     flex: 1,
-    paddingHorizontal: 15,
+    paddingHorizontal: spacing.md,
     paddingVertical: 12,
-    fontSize: 14,
-    color: '#333',
-  },
-  eyeButton: {
-    paddingHorizontal: 15,
-  },
-  eyeIcon: {
-    fontSize: 18,
-  },
-  forgotPassword: {
-    color: '#3498db',
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 20,
-  },
-  loginButton: {
-    backgroundColor: '#27ae60',
-    borderRadius: 8,
-    paddingVertical: 14,
-    marginBottom: 20,
-  },
-  loginButtonDisabled: {
-    backgroundColor: '#95a5a6',
-    opacity: 0.7,
-  },
-  loginButtonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    color: colors.textPrimary,
+  },
+  toggleButton: {
+    paddingHorizontal: spacing.md,
+  },
+  toggleText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.brand,
+  },
+
+  // Submit
+  submitButton: {
+    backgroundColor: colors.brand,
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    ...shadows.sm,
+  },
+  submitButtonPressed: {
+    backgroundColor: colors.brandDark,
+  },
+  submitButtonDisabled: {
+    backgroundColor: colors.mediumGray,
+  },
+  submitButtonText: {
+    ...typography.button,
+    color: colors.white,
   },
 });
