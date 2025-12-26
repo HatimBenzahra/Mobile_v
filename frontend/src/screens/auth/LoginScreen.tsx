@@ -33,7 +33,7 @@ export default function LoginScreen() {
     setIsLoading(false);
 
     if (result.success && result.user) {
-      navigation.replace('Dashboard', { user: result.user });
+      navigation.replace('Main', { utilisateur: result.user });
     } else {
       Alert.alert('Erreur', result.error || ErrorMessages.GENERIC.UNKNOWN);
     }

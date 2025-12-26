@@ -17,5 +17,12 @@ export interface User {
 
 export type RootStackParamList = {
   Login: undefined;
-  Dashboard: { user: User };
+  Main: { utilisateur: User };
+};
+
+export type TabParamList = {
+  TableauDeBord: undefined;
+  Immeubles: undefined;
+  Historique: undefined;
+  Profil: undefined;
 };
