@@ -1,19 +1,34 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { Logger } from '@nestjs/common';
+import * as fs from 'fs';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  // Configuration CORS pour permettre les requêtes du front
-  app.enableCors({
-    origin: true, // Autorise toutes les origines en dev
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
+  const logger = new Logger('Bootstrap');
+
+  // Fix: Explicitly type the variable so it can be an object or undefined
+  let httpsOptions: { key: Buffer; cert: Buffer } | undefined = undefined;
+
+  // On active le HTTPS local seulement si les fichiers existent (Mode Dev)
+  if (fs.existsSync('./ssl/key.pem') && fs.existsSync('./ssl/cert.pem')) {
+    httpsOptions = {
+      key: fs.readFileSync('./ssl/key.pem'),
+      cert: fs.readFileSync('./ssl/cert.pem'),
+    };
+    logger.log('🔒 SSL certificates found - Starting in HTTPS mode');
+  } else {
+    logger.log('🌐 No SSL certificates - Starting in HTTP mode');
+  }
+
+  const app = await NestFactory.create(AppModule, {
+    httpsOptions, // Sera 'undefined' en prod -> NestJS démarrera en HTTP simple
   });
 
   // Proxy WebSocket pour LiveKit
   // Permet de convertir WSS (Front) -> WS (LiveKit)
+  const proxyLogger = new Logger('LiveKitProxy');
+
   app.use(
     '/livekit-proxy',
     createProxyMiddleware({
@@ -24,11 +39,20 @@ async function bootstrap() {
         '^/livekit-proxy': '', // Enlever le préfixe lors du transfert
       },
       // @ts-ignore - Type mismatch in library but valid option
-      onProxyReqWs: (proxyReq, req, socket) => {
-         console.log('🔌 WebSocket Proxy Connection:', req.url);
+      onProxyReqWs: (_proxyReq: any, req: any, _socket: any) => {
+         proxyLogger.log(`🔌 WebSocket connection request: ${req.url}`);
+         proxyLogger.log(`🎯 Target: ${process.env.LK_HOST || 'http://100.68.221.26:7880'}`);
+         proxyLogger.debug(`📋 Headers: ${JSON.stringify(req.headers)}`);
       },
-      onError: (err, req, res) => {
-        console.error('❌ Proxy Error:', err);
+      onOpen: (_proxySocket: any) => {
+        proxyLogger.log('✅ WebSocket connection opened to LiveKit');
+      },
+      onClose: (_res: any, _socket: any, _head: any) => {
+        proxyLogger.log('🔌 WebSocket connection closed');
+      },
+      onError: (err: any, _req: any, _res: any) => {
+        proxyLogger.error(`❌ Proxy Error: ${err.message}`);
+        proxyLogger.error(`❌ Error stack: ${err.stack}`);
       }
     }),
   );

@@ -9,6 +9,8 @@ export declare class Statistic {
     immeublesVisites: number;
     rendezVousPris: number;
     refus: number;
+    absents: number;
+    argumentes: number;
     nbImmeublesProspectes: number;
     nbPortesProspectes: number;
     createdAt: Date;
@@ -24,6 +26,8 @@ export declare class CreateStatisticInput {
     immeublesVisites: number;
     rendezVousPris: number;
     refus: number;
+    absents: number;
+    argumentes: number;
     nbImmeublesProspectes: number;
     nbPortesProspectes: number;
 }

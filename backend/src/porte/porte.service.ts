@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma.service';
 import { CreatePorteInput, UpdatePorteInput, StatutPorte } from './porte.dto';
 import { StatisticSyncService } from '../statistic/statistic-sync.service';
+import { getAllStatuses } from './porte-status.constants';
 
 @Injectable()
 export class PorteService {
@@ -167,12 +168,22 @@ export class PorteService {
     immeubleId: number,
     userId: number,
     userRole: string,
+    skip?: number,
+    take?: number,
+    etage?: number,
   ) {
     await this.ensureImmeubleAccess(immeubleId, userId, userRole);
 
+    const where: any = { immeubleId };
+    if (etage) {
+      where.etage = etage;
+    }
+
     return this.prisma.porte.findMany({
-      where: { immeubleId },
+      where,
       orderBy: [{ etage: 'asc' }, { numero: 'asc' }],
+      skip,
+      take,
     });
   }
 
@@ -188,9 +199,9 @@ export class PorteService {
 
     const oldStatut = currentPorte.statut;
 
-    // 2. Si le statut change vers NECESSITE_REPASSAGE, incrémenter le nombre de repassages
-    if (data.statut === StatutPorte.NECESSITE_REPASSAGE) {
-      if (currentPorte.statut !== StatutPorte.NECESSITE_REPASSAGE) {
+    // 2. Si le statut change vers ABSENT, incrémenter le nombre de repassages
+    if (data.statut === StatutPorte.ABSENT) {
+      if (currentPorte.statut !== data.statut) {
         data.nbRepassages = (currentPorte.nbRepassages || 0) + 1;
       }
     }
@@ -210,13 +221,37 @@ export class PorteService {
       data: { updatedAt: new Date() },
     });
 
-    // 5. 🎯 NOUVELLE LOGIQUE : Synchroniser les statistiques si le statut a changé
+    // Synchroniser les statistiques si le statut a changé
     if (data.statut && data.statut !== oldStatut) {
       try {
         await this.statisticSyncService.syncCommercialStats(updatedPorte.immeubleId);
       } catch (error) {
         // Log l'erreur mais ne fait pas échouer la mise à jour de la porte
         console.error('Erreur sync statistiques:', error);
+      }
+
+      // Enregistrer dans l'historique si le statut a changé
+      try {
+        // Déterminer si c'est un commercial ou un manager qui fait la modification
+        const immeuble = await this.prisma.immeuble.findUnique({
+          where: { id: updatedPorte.immeubleId },
+          select: { commercialId: true, managerId: true },
+        });
+
+        await this.prisma.statusHistorique.create({
+          data: {
+            porteId: id,
+            statut: data.statut,
+            commentaire: data.commentaire || null,
+            rdvDate: data.rdvDate || null,
+            rdvTime: data.rdvTime || null,
+            commercialId: userRole === 'commercial' ? userId : immeuble?.commercialId,
+            managerId: userRole === 'manager' ? userId : immeuble?.managerId,
+          },
+        });
+      } catch (error) {
+        // Log l'erreur mais ne fait pas échouer la mise à jour de la porte
+        console.error('Erreur enregistrement historique:', error);
       }
     }
 
@@ -263,49 +298,67 @@ export class PorteService {
   async getStatistiquesPortes(immeubleId?: number) {
     const whereClause = immeubleId ? { immeubleId } : {};
 
-    const [
-      totalPortes,
-      contratsSigne,
-      rdvPris,
-      curieux,
-      refus,
-      nonVisitees,
-      necessiteRepassage,
-    ] = await Promise.all([
-      this.prisma.porte.count({ where: whereClause }),
-      this.prisma.porte.count({
-        where: { ...whereClause, statut: StatutPorte.CONTRAT_SIGNE },
-      }),
-      this.prisma.porte.count({
-        where: { ...whereClause, statut: StatutPorte.RENDEZ_VOUS_PRIS },
-      }),
-      this.prisma.porte.count({
-        where: { ...whereClause, statut: StatutPorte.CURIEUX },
-      }),
-      this.prisma.porte.count({
-        where: { ...whereClause, statut: StatutPorte.REFUS },
-      }),
-      this.prisma.porte.count({
-        where: { ...whereClause, statut: StatutPorte.NON_VISITE },
-      }),
-      this.prisma.porte.count({
-        where: { ...whereClause, statut: StatutPorte.NECESSITE_REPASSAGE },
-      }),
-    ]);
+    // Utiliser groupBy pour compter tous les statuts dynamiquement
+    const portesGrouped = await this.prisma.porte.groupBy({
+      by: ['statut'],
+      where: whereClause,
+      _count: {
+        statut: true,
+      },
+      _sum: {
+        nbContrats: true,
+      },
+    });
+
+    const totalPortes = await this.prisma.porte.count({ where: whereClause });
+
+    // Créer un objet avec tous les compteurs initialisés à 0
+    const statusCounts: Record<string, number> = {};
+    getAllStatuses().forEach(status => {
+      statusCounts[status] = 0;
+    });
+
+    // Remplir avec les vrais comptages
+    portesGrouped.forEach(group => {
+      statusCounts[group.statut] = group._count.statut;
+    });
+
+    // Pour CONTRAT_SIGNE, utiliser la somme des nbContrats au lieu du simple count
+    const contratsSignesGroup = portesGrouped.find(g => g.statut === StatutPorte.CONTRAT_SIGNE);
+    const totalContratsSignes = contratsSignesGroup?._sum?.nbContrats || 0;
+
+    // Statistiques par étage
+    const etagesGrouped = await this.prisma.porte.groupBy({
+      by: ['etage'],
+      where: whereClause,
+      _count: {
+        _all: true,
+      },
+      orderBy: {
+        etage: 'asc',
+      },
+    });
+
+    const portesParEtage = etagesGrouped.map(group => ({
+      etage: group.etage,
+      count: group._count._all,
+    }));
 
     return {
       totalPortes,
-      contratsSigne,
-      rdvPris,
-      curieux,
-      refus,
-      nonVisitees,
-      necessiteRepassage,
-      portesVisitees: totalPortes - nonVisitees,
+      contratsSigne: totalContratsSignes, // Somme des nbContrats au lieu du count de portes
+      rdvPris: statusCounts[StatutPorte.RENDEZ_VOUS_PRIS],
+      absent: statusCounts[StatutPorte.ABSENT],
+      argumente: statusCounts[StatutPorte.ARGUMENTE],
+      refus: statusCounts[StatutPorte.REFUS],
+      nonVisitees: statusCounts[StatutPorte.NON_VISITE],
+      necessiteRepassage: statusCounts[StatutPorte.NECESSITE_REPASSAGE],
+      portesVisitees: totalPortes - statusCounts[StatutPorte.NON_VISITE],
       tauxConversion:
         totalPortes > 0
-          ? ((contratsSigne / totalPortes) * 100).toFixed(2)
+          ? ((totalContratsSignes / totalPortes) * 100).toFixed(2)
           : '0',
+      portesParEtage, // NEW
     };
   }
 
@@ -403,6 +456,76 @@ export class PorteService {
       },
       orderBy: {
         rdvTime: 'asc',
+      },
+    });
+  }
+
+  // ============= STATUS HISTORIQUE METHODS =============
+
+  /**
+   * Récupère l'historique complet des statuts d'une porte
+   * Trié du plus récent au plus ancien
+   */
+  async getStatusHistoriqueByPorte(porteId: number) {
+    return this.prisma.statusHistorique.findMany({
+      where: { porteId },
+      include: {
+        commercial: {
+          select: {
+            id: true,
+            nom: true,
+            prenom: true,
+          },
+        },
+        manager: {
+          select: {
+            id: true,
+            nom: true,
+            prenom: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  /**
+   * Récupère l'historique des statuts d'un immeuble
+   */
+  async getStatusHistoriqueByImmeuble(immeubleId: number) {
+    return this.prisma.statusHistorique.findMany({
+      where: {
+        porte: {
+          immeubleId,
+        },
+      },
+      include: {
+        porte: {
+          select: {
+            id: true,
+            numero: true,
+            etage: true,
+          },
+        },
+        commercial: {
+          select: {
+            id: true,
+            nom: true,
+            prenom: true,
+          },
+        },
+        manager: {
+          select: {
+            id: true,
+            nom: true,
+            prenom: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   }

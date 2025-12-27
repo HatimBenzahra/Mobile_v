@@ -22,6 +22,8 @@ let Statistic = class Statistic {
     immeublesVisites;
     rendezVousPris;
     refus;
+    absents;
+    argumentes;
     nbImmeublesProspectes;
     nbPortesProspectes;
     createdAt;
@@ -71,6 +73,14 @@ __decorate([
 __decorate([
     (0, graphql_1.Field)(() => graphql_1.Int),
     __metadata("design:type", Number)
+], Statistic.prototype, "absents", void 0);
+__decorate([
+    (0, graphql_1.Field)(() => graphql_1.Int),
+    __metadata("design:type", Number)
+], Statistic.prototype, "argumentes", void 0);
+__decorate([
+    (0, graphql_1.Field)(() => graphql_1.Int),
+    __metadata("design:type", Number)
 ], Statistic.prototype, "nbImmeublesProspectes", void 0);
 __decorate([
     (0, graphql_1.Field)(() => graphql_1.Int),
@@ -97,6 +107,8 @@ let CreateStatisticInput = class CreateStatisticInput {
     immeublesVisites;
     rendezVousPris;
     refus;
+    absents;
+    argumentes;
     nbImmeublesProspectes;
     nbPortesProspectes;
 };
@@ -137,6 +149,14 @@ __decorate([
     (0, graphql_1.Field)(() => graphql_1.Int),
     __metadata("design:type", Number)
 ], CreateStatisticInput.prototype, "refus", void 0);
+__decorate([
+    (0, graphql_1.Field)(() => graphql_1.Int),
+    __metadata("design:type", Number)
+], CreateStatisticInput.prototype, "absents", void 0);
+__decorate([
+    (0, graphql_1.Field)(() => graphql_1.Int),
+    __metadata("design:type", Number)
+], CreateStatisticInput.prototype, "argumentes", void 0);
 __decorate([
     (0, graphql_1.Field)(() => graphql_1.Int),
     __metadata("design:type", Number)

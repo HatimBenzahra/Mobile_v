@@ -35,8 +35,11 @@ let PorteResolver = class PorteResolver {
     findOne(id, user) {
         return this.porteService.findOne(id, user.id, user.role);
     }
-    findByImmeuble(immeubleId, user) {
-        return this.porteService.findByImmeuble(immeubleId, user.id, user.role);
+    findByImmeuble(immeubleId, skip, take, etage, user) {
+        return this.porteService.findByImmeuble(immeubleId, user.id, user.role, skip, take, etage);
+    }
+    getStatistics(immeubleId) {
+        return this.porteService.getStatistiquesPortes(immeubleId);
     }
     updatePorte(updatePorteInput, user) {
         return this.porteService.update(updatePorteInput, user.id, user.role);
@@ -53,6 +56,12 @@ let PorteResolver = class PorteResolver {
     }
     findRdvToday(user) {
         return this.porteService.findRdvToday(user.id, user.role);
+    }
+    getStatusHistoriqueByPorte(porteId) {
+        return this.porteService.getStatusHistoriqueByPorte(porteId);
+    }
+    getStatusHistoriqueByImmeuble(immeubleId) {
+        return this.porteService.getStatusHistoriqueByImmeuble(immeubleId);
     }
 };
 exports.PorteResolver = PorteResolver;
@@ -84,11 +93,22 @@ __decorate([
     (0, graphql_1.Query)(() => [porte_dto_1.Porte], { name: 'portesByImmeuble' }),
     (0, roles_decorator_1.Roles)('admin', 'directeur', 'manager', 'commercial'),
     __param(0, (0, graphql_1.Args)('immeubleId', { type: () => graphql_1.Int })),
-    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, graphql_1.Args)('skip', { type: () => graphql_1.Int, nullable: true })),
+    __param(2, (0, graphql_1.Args)('take', { type: () => graphql_1.Int, nullable: true })),
+    __param(3, (0, graphql_1.Args)('etage', { type: () => graphql_1.Int, nullable: true })),
+    __param(4, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:paramtypes", [Number, Number, Number, Number, Object]),
     __metadata("design:returntype", void 0)
 ], PorteResolver.prototype, "findByImmeuble", null);
+__decorate([
+    (0, graphql_1.Query)(() => porte_dto_1.PorteStatistics, { name: 'porteStatistics' }),
+    (0, roles_decorator_1.Roles)('admin', 'directeur', 'manager', 'commercial'),
+    __param(0, (0, graphql_1.Args)('immeubleId', { type: () => graphql_1.Int })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], PorteResolver.prototype, "getStatistics", null);
 __decorate([
     (0, graphql_1.Mutation)(() => porte_dto_1.Porte),
     (0, roles_decorator_1.Roles)('admin', 'directeur', 'manager', 'commercial'),
@@ -135,6 +155,22 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], PorteResolver.prototype, "findRdvToday", null);
+__decorate([
+    (0, graphql_1.Query)(() => [porte_dto_1.StatusHistorique], { name: 'statusHistoriqueByPorte' }),
+    (0, roles_decorator_1.Roles)('admin', 'directeur', 'manager', 'commercial'),
+    __param(0, (0, graphql_1.Args)('porteId', { type: () => graphql_1.Int })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], PorteResolver.prototype, "getStatusHistoriqueByPorte", null);
+__decorate([
+    (0, graphql_1.Query)(() => [porte_dto_1.StatusHistorique], { name: 'statusHistoriqueByImmeuble' }),
+    (0, roles_decorator_1.Roles)('admin', 'directeur', 'manager', 'commercial'),
+    __param(0, (0, graphql_1.Args)('immeubleId', { type: () => graphql_1.Int })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], PorteResolver.prototype, "getStatusHistoriqueByImmeuble", null);
 exports.PorteResolver = PorteResolver = __decorate([
     (0, graphql_1.Resolver)(() => porte_dto_1.Porte),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

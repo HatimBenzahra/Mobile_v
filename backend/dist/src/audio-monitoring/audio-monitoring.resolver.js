@@ -44,6 +44,9 @@ let AudioMonitoringResolver = class AudioMonitoringResolver {
     async generateManagerToken(managerId, roomName, user) {
         return this.audioMonitoringService.generateManagerToken(managerId, roomName, user);
     }
+    async logAudioEvent(eventType, message, details, user) {
+        return this.audioMonitoringService.logAudioEvent(eventType, message, details, user);
+    }
 };
 exports.AudioMonitoringResolver = AudioMonitoringResolver;
 __decorate([
@@ -100,6 +103,17 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, Object]),
     __metadata("design:returntype", Promise)
 ], AudioMonitoringResolver.prototype, "generateManagerToken", null);
+__decorate([
+    (0, graphql_1.Mutation)(() => Boolean),
+    (0, roles_decorator_1.Roles)('commercial', 'manager'),
+    __param(0, (0, graphql_1.Args)('eventType')),
+    __param(1, (0, graphql_1.Args)('message')),
+    __param(2, (0, graphql_1.Args)('details', { nullable: true })),
+    __param(3, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], AudioMonitoringResolver.prototype, "logAudioEvent", null);
 exports.AudioMonitoringResolver = AudioMonitoringResolver = __decorate([
     (0, graphql_1.Resolver)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

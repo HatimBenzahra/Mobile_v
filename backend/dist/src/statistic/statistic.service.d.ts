@@ -41,6 +41,8 @@ export declare class StatisticService {
         immeublesVisites: number;
         rendezVousPris: number;
         refus: number;
+        absents: number;
+        argumentes: number;
         nbImmeublesProspectes: number;
         nbPortesProspectes: number;
     }>;
@@ -80,6 +82,8 @@ export declare class StatisticService {
         immeublesVisites: number;
         rendezVousPris: number;
         refus: number;
+        absents: number;
+        argumentes: number;
         nbImmeublesProspectes: number;
         nbPortesProspectes: number;
     })[]>;
@@ -119,6 +123,8 @@ export declare class StatisticService {
         immeublesVisites: number;
         rendezVousPris: number;
         refus: number;
+        absents: number;
+        argumentes: number;
         nbImmeublesProspectes: number;
         nbPortesProspectes: number;
     }) | null>;
@@ -158,6 +164,8 @@ export declare class StatisticService {
         immeublesVisites: number;
         rendezVousPris: number;
         refus: number;
+        absents: number;
+        argumentes: number;
         nbImmeublesProspectes: number;
         nbPortesProspectes: number;
     }>;
@@ -197,6 +205,8 @@ export declare class StatisticService {
         immeublesVisites: number;
         rendezVousPris: number;
         refus: number;
+        absents: number;
+        argumentes: number;
         nbImmeublesProspectes: number;
         nbPortesProspectes: number;
     }>;

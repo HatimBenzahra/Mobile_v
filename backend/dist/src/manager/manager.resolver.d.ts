@@ -125,6 +125,7 @@ export declare class ManagerResolver {
                 etage: number;
                 statut: import("@prisma/client").$Enums.StatutPorte;
                 nbRepassages: number;
+                nbContrats: number;
                 rdvDate: Date | null;
                 rdvTime: string | null;
                 commentaire: string | null;
@@ -158,6 +159,8 @@ export declare class ManagerResolver {
             immeublesVisites: number;
             rendezVousPris: number;
             refus: number;
+            absents: number;
+            argumentes: number;
             nbImmeublesProspectes: number;
             nbPortesProspectes: number;
         }[];
@@ -223,6 +226,8 @@ export declare class ManagerResolver {
             immeublesVisites: number;
             rendezVousPris: number;
             refus: number;
+            absents: number;
+            argumentes: number;
             nbImmeublesProspectes: number;
             nbPortesProspectes: number;
         }[];
@@ -241,6 +246,8 @@ export declare class ManagerResolver {
                 immeublesVisites: number;
                 rendezVousPris: number;
                 refus: number;
+                absents: number;
+                argumentes: number;
                 nbImmeublesProspectes: number;
                 nbPortesProspectes: number;
             }[];
@@ -255,6 +262,7 @@ export declare class ManagerResolver {
                     etage: number;
                     statut: import("@prisma/client").$Enums.StatutPorte;
                     nbRepassages: number;
+                    nbContrats: number;
                     rdvDate: Date | null;
                     rdvTime: string | null;
                     commentaire: string | null;
@@ -301,6 +309,8 @@ export declare class ManagerResolver {
                 immeublesVisites: number;
                 rendezVousPris: number;
                 refus: number;
+                absents: number;
+                argumentes: number;
                 nbImmeublesProspectes: number;
                 nbPortesProspectes: number;
             }[];
@@ -315,6 +325,7 @@ export declare class ManagerResolver {
                     etage: number;
                     statut: import("@prisma/client").$Enums.StatutPorte;
                     nbRepassages: number;
+                    nbContrats: number;
                     rdvDate: Date | null;
                     rdvTime: string | null;
                     commentaire: string | null;

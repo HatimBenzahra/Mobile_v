@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { StatutPorte } from '../porte/porte.dto';
+import {
+  StatutPorte,
+  calculateStatsForStatus
+} from '../porte/porte-status.constants';
 
 /**
  * Service de synchronisation automatique des statistiques
@@ -121,6 +124,9 @@ export class StatisticSyncService {
       },
       _count: {
         statut: true
+      },
+      _sum: {
+        nbContrats: true
       }
     });
 
@@ -143,32 +149,31 @@ export class StatisticSyncService {
       contratsSignes: 0,
       rendezVousPris: 0,
       refus: 0,
+      absents: 0,
+      argumentes: 0,
       immeublesVisites: immeublesVisites,
       nbImmeublesProspectes: immeublesVisites, // Pour l'instant identique
       nbPortesProspectes: 0
     };
 
+    // Utilisation du helper centralisé pour calculer les stats
     result.forEach(group => {
       const count = group._count.statut;
-      
-      switch (group.statut) {
-        case StatutPorte.CONTRAT_SIGNE:
-          stats.contratsSignes += count;
-          stats.nbPortesProspectes += count;
-          break;
-        case StatutPorte.RENDEZ_VOUS_PRIS:
-          stats.rendezVousPris += count;
-          stats.nbPortesProspectes += count;
-          break;
-        case StatutPorte.REFUS:
-          stats.refus += count;
-          stats.nbPortesProspectes += count;
-          break;
-        case StatutPorte.CURIEUX:
-        case StatutPorte.NECESSITE_REPASSAGE:
-          stats.nbPortesProspectes += count;
-          break;
+      const totalContrats = group._sum.nbContrats || 0;
+      const statusStats = calculateStatsForStatus(group.statut, count);
+
+      // Pour CONTRAT_SIGNE, utiliser la somme des nbContrats
+      if (group.statut === StatutPorte.CONTRAT_SIGNE) {
+        stats.contratsSignes = totalContrats;
+      } else {
+        stats.contratsSignes += statusStats.contratsSignes;
       }
+
+      stats.rendezVousPris += statusStats.rendezVousPris;
+      stats.refus += statusStats.refus;
+      stats.absents += statusStats.absents;
+      stats.argumentes += statusStats.argumentes;
+      stats.nbPortesProspectes += statusStats.nbPortesProspectes;
     });
 
     return stats;
@@ -188,6 +193,9 @@ export class StatisticSyncService {
       },
       _count: {
         statut: true
+      },
+      _sum: {
+        nbContrats: true
       }
     });
 
@@ -210,32 +218,31 @@ export class StatisticSyncService {
       contratsSignes: 0,
       rendezVousPris: 0,
       refus: 0,
+      absents: 0,
+      argumentes: 0,
       immeublesVisites: immeublesVisites,
       nbImmeublesProspectes: immeublesVisites, // Pour l'instant identique
       nbPortesProspectes: 0
     };
 
+    // Utilisation du helper centralisé pour calculer les stats
     result.forEach(group => {
       const count = group._count.statut;
+      const totalContrats = group._sum.nbContrats || 0;
+      const statusStats = calculateStatsForStatus(group.statut, count);
 
-      switch (group.statut) {
-        case StatutPorte.CONTRAT_SIGNE:
-          stats.contratsSignes += count;
-          stats.nbPortesProspectes += count;
-          break;
-        case StatutPorte.RENDEZ_VOUS_PRIS:
-          stats.rendezVousPris += count;
-          stats.nbPortesProspectes += count;
-          break;
-        case StatutPorte.REFUS:
-          stats.refus += count;
-          stats.nbPortesProspectes += count;
-          break;
-        case StatutPorte.CURIEUX:
-        case StatutPorte.NECESSITE_REPASSAGE:
-          stats.nbPortesProspectes += count;
-          break;
+      // Pour CONTRAT_SIGNE, utiliser la somme des nbContrats
+      if (group.statut === StatutPorte.CONTRAT_SIGNE) {
+        stats.contratsSignes = totalContrats;
+      } else {
+        stats.contratsSignes += statusStats.contratsSignes;
       }
+
+      stats.rendezVousPris += statusStats.rendezVousPris;
+      stats.refus += statusStats.refus;
+      stats.absents += statusStats.absents;
+      stats.argumentes += statusStats.argumentes;
+      stats.nbPortesProspectes += statusStats.nbPortesProspectes;
     });
 
     return stats;
@@ -256,6 +263,8 @@ export class StatisticSyncService {
         contratsSignes: true,
         rendezVousPris: true,
         refus: true,
+        absents: true,
+        argumentes: true,
         immeublesVisites: true,
         nbImmeublesProspectes: true,
         nbPortesProspectes: true,
@@ -273,6 +282,8 @@ export class StatisticSyncService {
         contratsSignes: true,
         rendezVousPris: true,
         refus: true,
+        absents: true,
+        argumentes: true,
         immeublesVisites: true,
         nbImmeublesProspectes: true,
         nbPortesProspectes: true,
@@ -284,6 +295,8 @@ export class StatisticSyncService {
       contratsSignes: (managerStats._sum.contratsSignes || 0) + (commercialStats._sum.contratsSignes || 0),
       rendezVousPris: (managerStats._sum.rendezVousPris || 0) + (commercialStats._sum.rendezVousPris || 0),
       refus: (managerStats._sum.refus || 0) + (commercialStats._sum.refus || 0),
+      absents: (managerStats._sum.absents || 0) + (commercialStats._sum.absents || 0),
+      argumentes: (managerStats._sum.argumentes || 0) + (commercialStats._sum.argumentes || 0),
       immeublesVisites: (managerStats._sum.immeublesVisites || 0) + (commercialStats._sum.immeublesVisites || 0),
       nbImmeublesProspectes: (managerStats._sum.nbImmeublesProspectes || 0) + (commercialStats._sum.nbImmeublesProspectes || 0),
       nbPortesProspectes: (managerStats._sum.nbPortesProspectes || 0) + (commercialStats._sum.nbPortesProspectes || 0),

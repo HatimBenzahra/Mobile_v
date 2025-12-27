@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StatisticService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
+const porte_status_constants_1 = require("../porte/porte-status.constants");
 let StatisticService = class StatisticService {
     prisma;
     constructor(prisma) {
@@ -115,9 +116,18 @@ let StatisticService = class StatisticService {
                 case 'admin':
                     break;
                 case 'directeur':
-                    whereConditions.commercial = {
-                        directeurId: userId,
-                    };
+                    whereConditions.OR = [
+                        {
+                            commercial: {
+                                directeurId: userId,
+                            },
+                        },
+                        {
+                            manager: {
+                                directeurId: userId,
+                            },
+                        },
+                    ];
                     break;
                 case 'manager':
                     whereConditions.OR = [
@@ -300,24 +310,11 @@ let StatisticService = class StatisticService {
             };
             portesGroupedByStatut.forEach((group) => {
                 const count = group._count.statut;
-                switch (group.statut) {
-                    case 'CONTRAT_SIGNE':
-                        totalStats.contratsSignes += count;
-                        totalStats.portesProspectes += count;
-                        break;
-                    case 'RENDEZ_VOUS_PRIS':
-                        totalStats.rendezVousPris += count;
-                        totalStats.portesProspectes += count;
-                        break;
-                    case 'REFUS':
-                        totalStats.refus += count;
-                        totalStats.portesProspectes += count;
-                        break;
-                    case 'CURIEUX':
-                    case 'NECESSITE_REPASSAGE':
-                        totalStats.portesProspectes += count;
-                        break;
-                }
+                const statusStats = (0, porte_status_constants_1.calculateStatsForStatus)(group.statut, count);
+                totalStats.contratsSignes += statusStats.contratsSignes;
+                totalStats.rendezVousPris += statusStats.rendezVousPris;
+                totalStats.refus += statusStats.refus;
+                totalStats.portesProspectes += statusStats.nbPortesProspectes;
             });
             const immeublesVisites = await this.prisma.immeuble.count({
                 where: {

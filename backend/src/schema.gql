@@ -43,6 +43,12 @@ type Commercial {
   zones: [Zone!]!
 }
 
+type CommercialInfo {
+  id: Int!
+  nom: String!
+  prenom: String!
+}
+
 input CreateCommercialInput {
   age: Int!
   directeurId: Int
@@ -87,6 +93,7 @@ input CreatePorteInput {
   derniereVisite: DateTime
   etage: Int!
   immeubleId: Int!
+  nbContrats: Int! = 1
   nbRepassages: Int! = 0
   nomPersonnalise: String
   numero: String!
@@ -96,6 +103,8 @@ input CreatePorteInput {
 }
 
 input CreateStatisticInput {
+  absents: Int!
+  argumentes: Int!
   commercialId: Int
   contratsSignes: Int!
   directeurId: Int
@@ -140,6 +149,11 @@ type EgressState {
   error: String
   roomName: String
   status: String!
+}
+
+type EtageInStatistics {
+  count: Int!
+  etage: Int!
 }
 
 type HistoriqueZone {
@@ -205,6 +219,12 @@ type Manager {
   zones: [Zone!]
 }
 
+type ManagerInfo {
+  id: Int!
+  nom: String!
+  prenom: String!
+}
+
 type MonitoringSession {
   endedAt: DateTime
   id: ID!
@@ -240,6 +260,7 @@ type Mutation {
   createZone(createZoneInput: CreateZoneInput!): Zone!
   generateCommercialToken(commercialId: Int, roomName: String): LiveKitConnectionDetails!
   generateManagerToken(managerId: Int, roomName: String): LiveKitConnectionDetails!
+  logAudioEvent(details: String, eventType: String!, message: String!): Boolean!
   login(loginInput: LoginInput!): AuthResponse!
   recalculateAllStats: String!
   refreshToken(refreshToken: String!): AuthResponse!
@@ -276,6 +297,7 @@ type Porte {
   etage: Int!
   id: Int!
   immeubleId: Int!
+  nbContrats: Int!
   nbRepassages: Int!
   nomPersonnalise: String
   numero: String!
@@ -283,6 +305,26 @@ type Porte {
   rdvTime: String
   statut: StatutPorte!
   updatedAt: DateTime!
+}
+
+type PorteInfo {
+  etage: Int!
+  id: Int!
+  numero: String!
+}
+
+type PorteStatistics {
+  absent: Int!
+  argumente: Int!
+  contratsSigne: Int!
+  necessiteRepassage: Int!
+  nonVisitees: Int!
+  portesParEtage: [EtageInStatistics!]!
+  portesVisitees: Int!
+  rdvPris: Int!
+  refus: Int!
+  tauxConversion: String!
+  totalPortes: Int!
 }
 
 type Query {
@@ -307,12 +349,15 @@ type Query {
   managers: [Manager!]!
   me: UserInfo!
   porte(id: Int!): Porte!
+  porteStatistics(immeubleId: Int!): PorteStatistics!
   portes: [Porte!]!
-  portesByImmeuble(immeubleId: Int!): [Porte!]!
+  portesByImmeuble(etage: Int, immeubleId: Int!, skip: Int, take: Int): [Porte!]!
   portesModifiedToday(immeubleId: Int): [Porte!]!
   portesRdvToday: [Porte!]!
   statistic(id: Int!): Statistic!
   statistics(commercialId: Int): [Statistic!]!
+  statusHistoriqueByImmeuble(immeubleId: Int!): [StatusHistorique!]!
+  statusHistoriqueByPorte(porteId: Int!): [StatusHistorique!]!
   userZoneHistory(userId: Int!, userType: UserType!): [HistoriqueZone!]!
   validateStatsCoherence: String!
   zone(id: Int!): Zone!
@@ -351,6 +396,8 @@ input StartRecordingInput {
 }
 
 type Statistic {
+  absents: Int!
+  argumentes: Int!
   commercialId: Int
   contratsSignes: Int!
   createdAt: DateTime!
@@ -367,10 +414,26 @@ type Statistic {
   zoneId: Int
 }
 
+type StatusHistorique {
+  commentaire: String
+  commercial: CommercialInfo
+  commercialId: Int
+  createdAt: DateTime!
+  id: Int!
+  manager: ManagerInfo
+  managerId: Int
+  porte: PorteInfo
+  porteId: Int!
+  rdvDate: DateTime
+  rdvTime: String
+  statut: StatutPorte!
+}
+
 """Statut possible pour une porte"""
 enum StatutPorte {
+  ABSENT
+  ARGUMENTE
   CONTRAT_SIGNE
-  CURIEUX
   NECESSITE_REPASSAGE
   NON_VISITE
   REFUS
@@ -444,6 +507,7 @@ input UpdatePorteInput {
   derniereVisite: DateTime
   etage: Int
   id: Int!
+  nbContrats: Int
   nbRepassages: Int
   nomPersonnalise: String
   numero: String
@@ -453,6 +517,8 @@ input UpdatePorteInput {
 }
 
 input UpdateStatisticInput {
+  absents: Int
+  argumentes: Int
   commercialId: Int
   contratsSignes: Int
   directeurId: Int

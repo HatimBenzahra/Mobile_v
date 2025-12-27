@@ -39,4 +39,8 @@ export declare class AudioMonitoringService {
         id: number;
         role: string;
     }): Promise<LiveKitConnectionDetails>;
+    logAudioEvent(eventType: string, message: string, details: string | undefined, currentUser?: {
+        id: number;
+        role: string;
+    }): Promise<boolean>;
 }

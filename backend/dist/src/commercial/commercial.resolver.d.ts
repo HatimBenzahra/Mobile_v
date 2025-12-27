@@ -61,6 +61,8 @@ export declare class CommercialResolver {
             immeublesVisites: number;
             rendezVousPris: number;
             refus: number;
+            absents: number;
+            argumentes: number;
             nbImmeublesProspectes: number;
             nbPortesProspectes: number;
         }[];
@@ -125,6 +127,8 @@ export declare class CommercialResolver {
             immeublesVisites: number;
             rendezVousPris: number;
             refus: number;
+            absents: number;
+            argumentes: number;
             nbImmeublesProspectes: number;
             nbPortesProspectes: number;
         }[];
@@ -149,6 +153,7 @@ export declare class CommercialResolver {
                 etage: number;
                 statut: import("@prisma/client").$Enums.StatutPorte;
                 nbRepassages: number;
+                nbContrats: number;
                 rdvDate: Date | null;
                 rdvTime: string | null;
                 commentaire: string | null;

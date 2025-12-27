@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ZoneService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
+const porte_status_constants_1 = require("../porte/porte-status.constants");
 const zone_dto_1 = require("./zone.dto");
 let ZoneService = class ZoneService {
     prisma;
@@ -98,24 +99,11 @@ let ZoneService = class ZoneService {
         };
         portesGrouped.forEach((group) => {
             const count = group._count.statut;
-            switch (group.statut) {
-                case 'CONTRAT_SIGNE':
-                    stats.totalContratsSignes += count;
-                    stats.totalPortesProspectes += count;
-                    break;
-                case 'RENDEZ_VOUS_PRIS':
-                    stats.totalRendezVousPris += count;
-                    stats.totalPortesProspectes += count;
-                    break;
-                case 'REFUS':
-                    stats.totalRefus += count;
-                    stats.totalPortesProspectes += count;
-                    break;
-                case 'CURIEUX':
-                case 'NECESSITE_REPASSAGE':
-                    stats.totalPortesProspectes += count;
-                    break;
-            }
+            const statusStats = (0, porte_status_constants_1.calculateStatsForStatus)(group.statut, count);
+            stats.totalContratsSignes += statusStats.contratsSignes;
+            stats.totalRendezVousPris += statusStats.rendezVousPris;
+            stats.totalRefus += statusStats.refus;
+            stats.totalPortesProspectes += statusStats.nbPortesProspectes;
         });
         return stats;
     }

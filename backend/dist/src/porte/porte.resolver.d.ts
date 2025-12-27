@@ -13,6 +13,7 @@ export declare class PorteResolver {
         etage: number;
         statut: import("@prisma/client").$Enums.StatutPorte;
         nbRepassages: number;
+        nbContrats: number;
         rdvDate: Date | null;
         rdvTime: string | null;
         commentaire: string | null;
@@ -44,6 +45,7 @@ export declare class PorteResolver {
         etage: number;
         statut: import("@prisma/client").$Enums.StatutPorte;
         nbRepassages: number;
+        nbContrats: number;
         rdvDate: Date | null;
         rdvTime: string | null;
         commentaire: string | null;
@@ -90,12 +92,13 @@ export declare class PorteResolver {
         etage: number;
         statut: import("@prisma/client").$Enums.StatutPorte;
         nbRepassages: number;
+        nbContrats: number;
         rdvDate: Date | null;
         rdvTime: string | null;
         commentaire: string | null;
         derniereVisite: Date | null;
     }>;
-    findByImmeuble(immeubleId: number, user: any): Promise<{
+    findByImmeuble(immeubleId: number, skip: number, take: number, etage: number, user: any): Promise<{
         createdAt: Date;
         updatedAt: Date;
         id: number;
@@ -105,11 +108,28 @@ export declare class PorteResolver {
         etage: number;
         statut: import("@prisma/client").$Enums.StatutPorte;
         nbRepassages: number;
+        nbContrats: number;
         rdvDate: Date | null;
         rdvTime: string | null;
         commentaire: string | null;
         derniereVisite: Date | null;
     }[]>;
+    getStatistics(immeubleId: number): Promise<{
+        totalPortes: number;
+        contratsSigne: number;
+        rdvPris: number;
+        absent: number;
+        argumente: number;
+        refus: number;
+        nonVisitees: number;
+        necessiteRepassage: number;
+        portesVisitees: number;
+        tauxConversion: string;
+        portesParEtage: {
+            etage: number;
+            count: number;
+        }[];
+    }>;
     updatePorte(updatePorteInput: UpdatePorteInput, user: any): Promise<{
         immeuble: {
             adresse: string;
@@ -136,6 +156,7 @@ export declare class PorteResolver {
         etage: number;
         statut: import("@prisma/client").$Enums.StatutPorte;
         nbRepassages: number;
+        nbContrats: number;
         rdvDate: Date | null;
         rdvTime: string | null;
         commentaire: string | null;
@@ -151,6 +172,7 @@ export declare class PorteResolver {
         etage: number;
         statut: import("@prisma/client").$Enums.StatutPorte;
         nbRepassages: number;
+        nbContrats: number;
         rdvDate: Date | null;
         rdvTime: string | null;
         commentaire: string | null;
@@ -183,6 +205,7 @@ export declare class PorteResolver {
         etage: number;
         statut: import("@prisma/client").$Enums.StatutPorte;
         nbRepassages: number;
+        nbContrats: number;
         rdvDate: Date | null;
         rdvTime: string | null;
         commentaire: string | null;
@@ -226,9 +249,59 @@ export declare class PorteResolver {
         etage: number;
         statut: import("@prisma/client").$Enums.StatutPorte;
         nbRepassages: number;
+        nbContrats: number;
         rdvDate: Date | null;
         rdvTime: string | null;
         commentaire: string | null;
         derniereVisite: Date | null;
+    })[]>;
+    getStatusHistoriqueByPorte(porteId: number): Promise<({
+        manager: {
+            nom: string;
+            prenom: string;
+            id: number;
+        } | null;
+        commercial: {
+            nom: string;
+            prenom: string;
+            id: number;
+        } | null;
+    } & {
+        createdAt: Date;
+        id: number;
+        managerId: number | null;
+        commercialId: number | null;
+        statut: import("@prisma/client").$Enums.StatutPorte;
+        rdvDate: Date | null;
+        rdvTime: string | null;
+        commentaire: string | null;
+        porteId: number;
+    })[]>;
+    getStatusHistoriqueByImmeuble(immeubleId: number): Promise<({
+        manager: {
+            nom: string;
+            prenom: string;
+            id: number;
+        } | null;
+        commercial: {
+            nom: string;
+            prenom: string;
+            id: number;
+        } | null;
+        porte: {
+            id: number;
+            numero: string;
+            etage: number;
+        };
+    } & {
+        createdAt: Date;
+        id: number;
+        managerId: number | null;
+        commercialId: number | null;
+        statut: import("@prisma/client").$Enums.StatutPorte;
+        rdvDate: Date | null;
+        rdvTime: string | null;
+        commentaire: string | null;
+        porteId: number;
     })[]>;
 }

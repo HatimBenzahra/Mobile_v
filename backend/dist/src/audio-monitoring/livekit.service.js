@@ -37,11 +37,16 @@ let LiveKitService = LiveKitService_1 = class LiveKitService {
     }
     async createOrJoinRoom(roomName) {
         try {
+            this.logger.log(`📝 Création/Jointure room: ${roomName}`);
             await this.rsc.createRoom({ name: roomName });
+            this.logger.log(`✅ Room créée: ${roomName}`);
         }
         catch (e) {
             if (e?.response?.status !== 409) {
-                this.logger.warn(`createRoom(${roomName}): ${e.message}`);
+                this.logger.warn(`⚠️ Erreur createRoom(${roomName}): ${e.message}`);
+            }
+            else {
+                this.logger.debug(`ℹ️ Room existe déjà: ${roomName}`);
             }
         }
     }
@@ -57,21 +62,24 @@ let LiveKitService = LiveKitService_1 = class LiveKitService {
         try {
             const rooms = await this.rsc.listRooms();
             const out = [];
+            this.logger.debug(`📊 Listage de ${rooms.length} room(s) LiveKit`);
             for (const r of rooms) {
                 try {
                     const parts = await this.rsc.listParticipants(r.name);
+                    const participantIdentities = parts.map((p) => p.identity);
+                    this.logger.debug(`📍 Room ${r.name}: ${participantIdentities.length} participant(s) - [${participantIdentities.join(', ')}]`);
                     out.push({
                         roomName: r.name,
                         createdAt: new Date(r.creationTime
                             ? Number(r.creationTime) * 1000
                             : Date.now()),
-                        participants: parts.map((p) => p.identity),
+                        participants: participantIdentities,
                     });
                 }
                 catch (e) {
                     if (e?.response?.status === 404 ||
                         e?.message?.includes('not exist')) {
-                        this.logger.debug(`Room ${r.name} no longer exists, skipping`);
+                        this.logger.debug(`⚠️ Room ${r.name} n'existe plus, ignorée`);
                         continue;
                     }
                     throw e;
@@ -80,7 +88,7 @@ let LiveKitService = LiveKitService_1 = class LiveKitService {
             return out;
         }
         catch (e) {
-            this.logger.error(`Error listing rooms: ${e.message}`);
+            this.logger.error(`❌ Erreur listing rooms: ${e.message}`);
             return [];
         }
     }

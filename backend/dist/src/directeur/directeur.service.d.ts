@@ -72,6 +72,8 @@ export declare class DirecteurService {
             immeublesVisites: number;
             rendezVousPris: number;
             refus: number;
+            absents: number;
+            argumentes: number;
             nbImmeublesProspectes: number;
             nbPortesProspectes: number;
         }[];
@@ -121,6 +123,8 @@ export declare class DirecteurService {
             immeublesVisites: number;
             rendezVousPris: number;
             refus: number;
+            absents: number;
+            argumentes: number;
             nbImmeublesProspectes: number;
             nbPortesProspectes: number;
         }[];

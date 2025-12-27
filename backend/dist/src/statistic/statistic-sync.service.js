@@ -13,7 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StatisticSyncService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
-const porte_dto_1 = require("../porte/porte.dto");
+const porte_status_constants_1 = require("../porte/porte-status.constants");
 let StatisticSyncService = StatisticSyncService_1 = class StatisticSyncService {
     prisma;
     logger = new common_1.Logger(StatisticSyncService_1.name);
@@ -93,6 +93,9 @@ let StatisticSyncService = StatisticSyncService_1 = class StatisticSyncService {
             },
             _count: {
                 statut: true
+            },
+            _sum: {
+                nbContrats: true
             }
         });
         const immeublesVisites = await this.prisma.immeuble.count({
@@ -101,7 +104,7 @@ let StatisticSyncService = StatisticSyncService_1 = class StatisticSyncService {
                 portes: {
                     some: {
                         statut: {
-                            not: porte_dto_1.StatutPorte.NON_VISITE
+                            not: porte_status_constants_1.StatutPorte.NON_VISITE
                         }
                     }
                 }
@@ -111,30 +114,27 @@ let StatisticSyncService = StatisticSyncService_1 = class StatisticSyncService {
             contratsSignes: 0,
             rendezVousPris: 0,
             refus: 0,
+            absents: 0,
+            argumentes: 0,
             immeublesVisites: immeublesVisites,
             nbImmeublesProspectes: immeublesVisites,
             nbPortesProspectes: 0
         };
         result.forEach(group => {
             const count = group._count.statut;
-            switch (group.statut) {
-                case porte_dto_1.StatutPorte.CONTRAT_SIGNE:
-                    stats.contratsSignes += count;
-                    stats.nbPortesProspectes += count;
-                    break;
-                case porte_dto_1.StatutPorte.RENDEZ_VOUS_PRIS:
-                    stats.rendezVousPris += count;
-                    stats.nbPortesProspectes += count;
-                    break;
-                case porte_dto_1.StatutPorte.REFUS:
-                    stats.refus += count;
-                    stats.nbPortesProspectes += count;
-                    break;
-                case porte_dto_1.StatutPorte.CURIEUX:
-                case porte_dto_1.StatutPorte.NECESSITE_REPASSAGE:
-                    stats.nbPortesProspectes += count;
-                    break;
+            const totalContrats = group._sum.nbContrats || 0;
+            const statusStats = (0, porte_status_constants_1.calculateStatsForStatus)(group.statut, count);
+            if (group.statut === porte_status_constants_1.StatutPorte.CONTRAT_SIGNE) {
+                stats.contratsSignes = totalContrats;
             }
+            else {
+                stats.contratsSignes += statusStats.contratsSignes;
+            }
+            stats.rendezVousPris += statusStats.rendezVousPris;
+            stats.refus += statusStats.refus;
+            stats.absents += statusStats.absents;
+            stats.argumentes += statusStats.argumentes;
+            stats.nbPortesProspectes += statusStats.nbPortesProspectes;
         });
         return stats;
     }
@@ -148,6 +148,9 @@ let StatisticSyncService = StatisticSyncService_1 = class StatisticSyncService {
             },
             _count: {
                 statut: true
+            },
+            _sum: {
+                nbContrats: true
             }
         });
         const immeublesVisites = await this.prisma.immeuble.count({
@@ -156,7 +159,7 @@ let StatisticSyncService = StatisticSyncService_1 = class StatisticSyncService {
                 portes: {
                     some: {
                         statut: {
-                            not: porte_dto_1.StatutPorte.NON_VISITE
+                            not: porte_status_constants_1.StatutPorte.NON_VISITE
                         }
                     }
                 }
@@ -166,30 +169,27 @@ let StatisticSyncService = StatisticSyncService_1 = class StatisticSyncService {
             contratsSignes: 0,
             rendezVousPris: 0,
             refus: 0,
+            absents: 0,
+            argumentes: 0,
             immeublesVisites: immeublesVisites,
             nbImmeublesProspectes: immeublesVisites,
             nbPortesProspectes: 0
         };
         result.forEach(group => {
             const count = group._count.statut;
-            switch (group.statut) {
-                case porte_dto_1.StatutPorte.CONTRAT_SIGNE:
-                    stats.contratsSignes += count;
-                    stats.nbPortesProspectes += count;
-                    break;
-                case porte_dto_1.StatutPorte.RENDEZ_VOUS_PRIS:
-                    stats.rendezVousPris += count;
-                    stats.nbPortesProspectes += count;
-                    break;
-                case porte_dto_1.StatutPorte.REFUS:
-                    stats.refus += count;
-                    stats.nbPortesProspectes += count;
-                    break;
-                case porte_dto_1.StatutPorte.CURIEUX:
-                case porte_dto_1.StatutPorte.NECESSITE_REPASSAGE:
-                    stats.nbPortesProspectes += count;
-                    break;
+            const totalContrats = group._sum.nbContrats || 0;
+            const statusStats = (0, porte_status_constants_1.calculateStatsForStatus)(group.statut, count);
+            if (group.statut === porte_status_constants_1.StatutPorte.CONTRAT_SIGNE) {
+                stats.contratsSignes = totalContrats;
             }
+            else {
+                stats.contratsSignes += statusStats.contratsSignes;
+            }
+            stats.rendezVousPris += statusStats.rendezVousPris;
+            stats.refus += statusStats.refus;
+            stats.absents += statusStats.absents;
+            stats.argumentes += statusStats.argumentes;
+            stats.nbPortesProspectes += statusStats.nbPortesProspectes;
         });
         return stats;
     }
@@ -204,6 +204,8 @@ let StatisticSyncService = StatisticSyncService_1 = class StatisticSyncService {
                 contratsSignes: true,
                 rendezVousPris: true,
                 refus: true,
+                absents: true,
+                argumentes: true,
                 immeublesVisites: true,
                 nbImmeublesProspectes: true,
                 nbPortesProspectes: true,
@@ -219,6 +221,8 @@ let StatisticSyncService = StatisticSyncService_1 = class StatisticSyncService {
                 contratsSignes: true,
                 rendezVousPris: true,
                 refus: true,
+                absents: true,
+                argumentes: true,
                 immeublesVisites: true,
                 nbImmeublesProspectes: true,
                 nbPortesProspectes: true,
@@ -228,6 +232,8 @@ let StatisticSyncService = StatisticSyncService_1 = class StatisticSyncService {
             contratsSignes: (managerStats._sum.contratsSignes || 0) + (commercialStats._sum.contratsSignes || 0),
             rendezVousPris: (managerStats._sum.rendezVousPris || 0) + (commercialStats._sum.rendezVousPris || 0),
             refus: (managerStats._sum.refus || 0) + (commercialStats._sum.refus || 0),
+            absents: (managerStats._sum.absents || 0) + (commercialStats._sum.absents || 0),
+            argumentes: (managerStats._sum.argumentes || 0) + (commercialStats._sum.argumentes || 0),
             immeublesVisites: (managerStats._sum.immeublesVisites || 0) + (commercialStats._sum.immeublesVisites || 0),
             nbImmeublesProspectes: (managerStats._sum.nbImmeublesProspectes || 0) + (commercialStats._sum.nbImmeublesProspectes || 0),
             nbPortesProspectes: (managerStats._sum.nbPortesProspectes || 0) + (commercialStats._sum.nbPortesProspectes || 0),

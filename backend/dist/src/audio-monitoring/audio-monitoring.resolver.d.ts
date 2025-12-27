@@ -9,4 +9,5 @@ export declare class AudioMonitoringResolver {
     getActiveRooms(user: any): Promise<ActiveRoom[]>;
     generateCommercialToken(commercialId: number | undefined, roomName?: string, user?: any): Promise<LiveKitConnectionDetails>;
     generateManagerToken(managerId: number | undefined, roomName?: string, user?: any): Promise<LiveKitConnectionDetails>;
+    logAudioEvent(eventType: string, message: string, details?: string, user?: any): Promise<boolean>;
 }

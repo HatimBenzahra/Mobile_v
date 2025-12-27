@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
 const porte_dto_1 = require("./porte.dto");
 const statistic_sync_service_1 = require("../statistic/statistic-sync.service");
+const porte_status_constants_1 = require("./porte-status.constants");
 let PorteService = class PorteService {
     prisma;
     statisticSyncService;
@@ -134,19 +135,25 @@ let PorteService = class PorteService {
     async findOne(id, userId, userRole) {
         return this.ensurePorteAccess(id, userId, userRole);
     }
-    async findByImmeuble(immeubleId, userId, userRole) {
+    async findByImmeuble(immeubleId, userId, userRole, skip, take, etage) {
         await this.ensureImmeubleAccess(immeubleId, userId, userRole);
+        const where = { immeubleId };
+        if (etage) {
+            where.etage = etage;
+        }
         return this.prisma.porte.findMany({
-            where: { immeubleId },
+            where,
             orderBy: [{ etage: 'asc' }, { numero: 'asc' }],
+            skip,
+            take,
         });
     }
     async update(updatePorteInput, userId, userRole) {
         const { id, ...data } = updatePorteInput;
         const currentPorte = await this.ensurePorteAccess(id, userId, userRole);
         const oldStatut = currentPorte.statut;
-        if (data.statut === porte_dto_1.StatutPorte.NECESSITE_REPASSAGE) {
-            if (currentPorte.statut !== porte_dto_1.StatutPorte.NECESSITE_REPASSAGE) {
+        if (data.statut === porte_dto_1.StatutPorte.ABSENT) {
+            if (currentPorte.statut !== data.statut) {
                 data.nbRepassages = (currentPorte.nbRepassages || 0) + 1;
             }
         }
@@ -167,6 +174,26 @@ let PorteService = class PorteService {
             }
             catch (error) {
                 console.error('Erreur sync statistiques:', error);
+            }
+            try {
+                const immeuble = await this.prisma.immeuble.findUnique({
+                    where: { id: updatedPorte.immeubleId },
+                    select: { commercialId: true, managerId: true },
+                });
+                await this.prisma.statusHistorique.create({
+                    data: {
+                        porteId: id,
+                        statut: data.statut,
+                        commentaire: data.commentaire || null,
+                        rdvDate: data.rdvDate || null,
+                        rdvTime: data.rdvTime || null,
+                        commercialId: userRole === 'commercial' ? userId : immeuble?.commercialId,
+                        managerId: userRole === 'manager' ? userId : immeuble?.managerId,
+                    },
+                });
+            }
+            catch (error) {
+                console.error('Erreur enregistrement historique:', error);
             }
         }
         return updatedPorte;
@@ -198,39 +225,54 @@ let PorteService = class PorteService {
     }
     async getStatistiquesPortes(immeubleId) {
         const whereClause = immeubleId ? { immeubleId } : {};
-        const [totalPortes, contratsSigne, rdvPris, curieux, refus, nonVisitees, necessiteRepassage,] = await Promise.all([
-            this.prisma.porte.count({ where: whereClause }),
-            this.prisma.porte.count({
-                where: { ...whereClause, statut: porte_dto_1.StatutPorte.CONTRAT_SIGNE },
-            }),
-            this.prisma.porte.count({
-                where: { ...whereClause, statut: porte_dto_1.StatutPorte.RENDEZ_VOUS_PRIS },
-            }),
-            this.prisma.porte.count({
-                where: { ...whereClause, statut: porte_dto_1.StatutPorte.CURIEUX },
-            }),
-            this.prisma.porte.count({
-                where: { ...whereClause, statut: porte_dto_1.StatutPorte.REFUS },
-            }),
-            this.prisma.porte.count({
-                where: { ...whereClause, statut: porte_dto_1.StatutPorte.NON_VISITE },
-            }),
-            this.prisma.porte.count({
-                where: { ...whereClause, statut: porte_dto_1.StatutPorte.NECESSITE_REPASSAGE },
-            }),
-        ]);
+        const portesGrouped = await this.prisma.porte.groupBy({
+            by: ['statut'],
+            where: whereClause,
+            _count: {
+                statut: true,
+            },
+            _sum: {
+                nbContrats: true,
+            },
+        });
+        const totalPortes = await this.prisma.porte.count({ where: whereClause });
+        const statusCounts = {};
+        (0, porte_status_constants_1.getAllStatuses)().forEach(status => {
+            statusCounts[status] = 0;
+        });
+        portesGrouped.forEach(group => {
+            statusCounts[group.statut] = group._count.statut;
+        });
+        const contratsSignesGroup = portesGrouped.find(g => g.statut === porte_dto_1.StatutPorte.CONTRAT_SIGNE);
+        const totalContratsSignes = contratsSignesGroup?._sum?.nbContrats || 0;
+        const etagesGrouped = await this.prisma.porte.groupBy({
+            by: ['etage'],
+            where: whereClause,
+            _count: {
+                _all: true,
+            },
+            orderBy: {
+                etage: 'asc',
+            },
+        });
+        const portesParEtage = etagesGrouped.map(group => ({
+            etage: group.etage,
+            count: group._count._all,
+        }));
         return {
             totalPortes,
-            contratsSigne,
-            rdvPris,
-            curieux,
-            refus,
-            nonVisitees,
-            necessiteRepassage,
-            portesVisitees: totalPortes - nonVisitees,
+            contratsSigne: totalContratsSignes,
+            rdvPris: statusCounts[porte_dto_1.StatutPorte.RENDEZ_VOUS_PRIS],
+            absent: statusCounts[porte_dto_1.StatutPorte.ABSENT],
+            argumente: statusCounts[porte_dto_1.StatutPorte.ARGUMENTE],
+            refus: statusCounts[porte_dto_1.StatutPorte.REFUS],
+            nonVisitees: statusCounts[porte_dto_1.StatutPorte.NON_VISITE],
+            necessiteRepassage: statusCounts[porte_dto_1.StatutPorte.NECESSITE_REPASSAGE],
+            portesVisitees: totalPortes - statusCounts[porte_dto_1.StatutPorte.NON_VISITE],
             tauxConversion: totalPortes > 0
-                ? ((contratsSigne / totalPortes) * 100).toFixed(2)
+                ? ((totalContratsSignes / totalPortes) * 100).toFixed(2)
                 : '0',
+            portesParEtage,
         };
     }
     async findModifiedToday(immeubleId, userId, userRole) {
@@ -311,6 +353,65 @@ let PorteService = class PorteService {
             },
             orderBy: {
                 rdvTime: 'asc',
+            },
+        });
+    }
+    async getStatusHistoriqueByPorte(porteId) {
+        return this.prisma.statusHistorique.findMany({
+            where: { porteId },
+            include: {
+                commercial: {
+                    select: {
+                        id: true,
+                        nom: true,
+                        prenom: true,
+                    },
+                },
+                manager: {
+                    select: {
+                        id: true,
+                        nom: true,
+                        prenom: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+    }
+    async getStatusHistoriqueByImmeuble(immeubleId) {
+        return this.prisma.statusHistorique.findMany({
+            where: {
+                porte: {
+                    immeubleId,
+                },
+            },
+            include: {
+                porte: {
+                    select: {
+                        id: true,
+                        numero: true,
+                        etage: true,
+                    },
+                },
+                commercial: {
+                    select: {
+                        id: true,
+                        nom: true,
+                        prenom: true,
+                    },
+                },
+                manager: {
+                    select: {
+                        id: true,
+                        nom: true,
+                        prenom: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
             },
         });
     }

@@ -213,23 +213,32 @@ let AudioMonitoringService = AudioMonitoringService_1 = class AudioMonitoringSer
     async cleanupGhostSessions() {
         const rooms = await this.liveKit.listRoomsWithParticipants();
         const sessionsToDelete = [];
+        this.logger.debug(`🔍 Vérification des sessions fantômes (${this.activeSessions.size} session(s) active(s))`);
         for (const [sessionId, session] of this.activeSessions.entries()) {
             const room = rooms.find((r) => r.roomName === session.roomName);
             if (!room) {
-                this.logger.warn(`Ghost session detected: room ${session.roomName} doesn't exist anymore`);
+                this.logger.warn(`👻 Ghost session détectée: room ${session.roomName} n'existe plus (Session: ${sessionId}, User: ${session.userType}-${session.userId})`);
                 sessionsToDelete.push(sessionId);
                 continue;
             }
             const expectedParticipant = `${session.userType.toLowerCase()}-${session.userId}`;
             const userIsPresent = room.participants.some((p) => p === expectedParticipant);
             if (!userIsPresent) {
-                this.logger.warn(`Ghost session detected: ${expectedParticipant} not in ${session.roomName}`);
+                this.logger.warn(`👻 Ghost session détectée: ${expectedParticipant} NOT IN ${session.roomName}`);
+                this.logger.warn(`   ❌ Participant attendu: "${expectedParticipant}" | Participants présents: [${room.participants.join(', ')}]`);
+                this.logger.warn(`   📊 Session ID: ${sessionId} | User Type: ${session.userType} | User ID: ${session.userId}`);
                 sessionsToDelete.push(sessionId);
             }
+            else {
+                this.logger.debug(`✅ Session valide: ${expectedParticipant} présent dans ${session.roomName}`);
+            }
         }
-        for (const sessionId of sessionsToDelete) {
-            this.activeSessions.delete(sessionId);
-            this.logger.log(`Ghost session ${sessionId} cleaned up`);
+        if (sessionsToDelete.length > 0) {
+            this.logger.log(`🧹 Nettoyage de ${sessionsToDelete.length} session(s) fantôme(s)`);
+            for (const sessionId of sessionsToDelete) {
+                this.activeSessions.delete(sessionId);
+                this.logger.log(`   🗑️ Session ${sessionId} supprimée`);
+            }
         }
     }
     async getActiveRooms(currentUser) {
@@ -263,16 +272,17 @@ let AudioMonitoringService = AudioMonitoringService_1 = class AudioMonitoringSer
             throw new common_1.ForbiddenException('Only commercials can generate this token');
         }
         if (requestedCommercialId && requestedCommercialId !== currentUser.id) {
-            this.logger.warn(`Commercial ${currentUser.id} attempted to request a token for ${requestedCommercialId}`);
+            this.logger.warn(`⚠️ Commercial ${currentUser.id} attempted to request a token for ${requestedCommercialId}`);
         }
         const target = {
             id: currentUser.id,
             type: 'COMMERCIAL',
         };
         const finalRoomName = this.validateRoomName(roomName, target);
+        this.logger.log(`🎤 [COMMERCIAL-${currentUser.id}] Génération token PUBLISHER (room: ${finalRoomName})`);
         await this.liveKit.createOrJoinRoom(finalRoomName);
         const conn = await this.liveKit.generateConnectionDetails(finalRoomName, `commercial-${currentUser.id}`, 'publisher');
-        this.logger.log(`Commercial token generated for commercial ${currentUser.id} (room ${finalRoomName})`);
+        this.logger.log(`✅ [COMMERCIAL-${currentUser.id}] Token généré - Identity: commercial-${currentUser.id} - ServerUrl: ${conn.serverUrl}`);
         return conn;
     }
     async generateManagerToken(requestedManagerId, roomName, currentUser) {
@@ -294,6 +304,44 @@ let AudioMonitoringService = AudioMonitoringService_1 = class AudioMonitoringSer
         const conn = await this.liveKit.generateConnectionDetails(finalRoomName, `manager-${currentUser.id}`, 'publisher');
         this.logger.log(`Manager token generated for manager ${currentUser.id} (room ${finalRoomName})`);
         return conn;
+    }
+    async logAudioEvent(eventType, message, details, currentUser) {
+        if (!currentUser) {
+            return false;
+        }
+        const userInfo = `[${currentUser.role.toUpperCase()}-${currentUser.id}]`;
+        switch (eventType) {
+            case 'MICROPHONE_MUTED':
+                this.logger.warn(`🔇 ${userInfo} MICROPHONE MUTED: ${message}`);
+                break;
+            case 'MICROPHONE_UNMUTED':
+                this.logger.log(`🔊 ${userInfo} MICROPHONE UNMUTED: ${message}`);
+                break;
+            case 'MICROPHONE_ENDED':
+                this.logger.error(`❌ ${userInfo} MICROPHONE ENDED: ${message}`);
+                break;
+            case 'TRACK_UNPUBLISHED':
+                this.logger.warn(`📤 ${userInfo} TRACK UNPUBLISHED: ${message}`);
+                break;
+            case 'CONNECTION_ERROR':
+                this.logger.error(`❌ ${userInfo} CONNECTION ERROR: ${message}`);
+                if (details) {
+                    this.logger.error(`   Details: ${details}`);
+                }
+                break;
+            case 'WEBSOCKET_FAILED':
+                this.logger.error(`🔌 ${userInfo} WEBSOCKET FAILED: ${message}`);
+                if (details) {
+                    this.logger.error(`   Details: ${details}`);
+                }
+                break;
+            default:
+                this.logger.debug(`📊 ${userInfo} ${eventType}: ${message}`);
+                if (details) {
+                    this.logger.debug(`   Details: ${details}`);
+                }
+        }
+        return true;
     }
 };
 exports.AudioMonitoringService = AudioMonitoringService;
