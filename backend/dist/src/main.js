@@ -54,16 +54,6 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         httpsOptions,
     });
-    const allowedOrigins = process.env.VITE_FRONTEND_URL?.split(',') || [
-        'http://localhost:5173',
-        'http://localhost:8081',
-    ];
-    app.enableCors({
-        origin: allowedOrigins,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-        credentials: true,
-    });
     const proxyLogger = new common_1.Logger('LiveKitProxy');
     app.use('/livekit-proxy', (0, http_proxy_middleware_1.createProxyMiddleware)({
         target: process.env.LK_HOST || 'http://100.68.221.26:7880',

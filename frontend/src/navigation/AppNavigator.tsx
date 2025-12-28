@@ -8,7 +8,7 @@ import { colors } from '../constants/theme';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import DashboardScreen from '../screens/dashboard/DashboardScreen';
-import ImmeublesScreen from '../screens/buildings/BuildingsScreen';
+import ImmeublesScreen from '../screens/immeubles/immeubles_list';
 import HistoriqueScreen from '../screens/history/HistoryScreen';
 import ProfilScreen from '../screens/profile/ProfileScreen';
 
